@@ -1,0 +1,1524 @@
+{
+  "generated": "2026-07-16",
+  "source": "MusicBrainz",
+  "albums": [
+    {
+      "name": "The College Dropout",
+      "short": "College Dropout",
+      "year": 2004
+    },
+    {
+      "name": "Late Registration",
+      "short": "Late Registration",
+      "year": 2005
+    },
+    {
+      "name": "Graduation",
+      "short": "Graduation",
+      "year": 2007
+    },
+    {
+      "name": "808s & Heartbreak",
+      "short": "808s",
+      "year": 2008
+    },
+    {
+      "name": "My Beautiful Dark Twisted Fantasy",
+      "short": "MBDTF",
+      "year": 2010
+    },
+    {
+      "name": "Watch the Throne",
+      "short": "Watch the Throne",
+      "year": 2011
+    },
+    {
+      "name": "Cruel Summer",
+      "short": "Cruel Summer",
+      "year": 2012
+    },
+    {
+      "name": "Yeezus",
+      "short": "Yeezus",
+      "year": 2013
+    },
+    {
+      "name": "The Life of Pablo",
+      "short": "TLOP",
+      "year": 2016
+    },
+    {
+      "name": "ye",
+      "short": "ye",
+      "year": 2018
+    },
+    {
+      "name": "Kids See Ghosts",
+      "short": "Kids See Ghosts",
+      "year": 2018
+    },
+    {
+      "name": "Jesus Is King",
+      "short": "Jesus Is King",
+      "year": 2019
+    },
+    {
+      "name": "Donda",
+      "short": "Donda",
+      "year": 2021
+    }
+  ],
+  "songs": [
+    {
+      "title": "We Don’t Care",
+      "album": "The College Dropout",
+      "track": 2,
+      "lengthMs": 239000,
+      "features": []
+    },
+    {
+      "title": "Graduation Day",
+      "album": "The College Dropout",
+      "track": 3,
+      "lengthMs": 82000,
+      "features": []
+    },
+    {
+      "title": "All Falls Down",
+      "album": "The College Dropout",
+      "track": 4,
+      "lengthMs": 223000,
+      "features": [
+        "Syleena Johnson"
+      ]
+    },
+    {
+      "title": "I’ll Fly Away",
+      "album": "The College Dropout",
+      "track": 5,
+      "lengthMs": 69000,
+      "features": []
+    },
+    {
+      "title": "Spaceship",
+      "album": "The College Dropout",
+      "track": 6,
+      "lengthMs": 324000,
+      "features": [
+        "GLC",
+        "Consequence"
+      ]
+    },
+    {
+      "title": "Jesus Walks",
+      "album": "The College Dropout",
+      "track": 7,
+      "lengthMs": 193000,
+      "features": []
+    },
+    {
+      "title": "Never Let Me Down",
+      "album": "The College Dropout",
+      "track": 8,
+      "lengthMs": 324000,
+      "features": [
+        "Jay-Z",
+        "J. Ivy"
+      ]
+    },
+    {
+      "title": "Get ’Em High",
+      "album": "The College Dropout",
+      "track": 9,
+      "lengthMs": 289000,
+      "features": [
+        "Talib Kweli",
+        "Common"
+      ]
+    },
+    {
+      "title": "Workout Plan",
+      "album": "The College Dropout",
+      "track": 10,
+      "lengthMs": 46000,
+      "features": []
+    },
+    {
+      "title": "The New Workout Plan",
+      "album": "The College Dropout",
+      "track": 11,
+      "lengthMs": 322000,
+      "features": []
+    },
+    {
+      "title": "Slow Jamz",
+      "album": "The College Dropout",
+      "track": 12,
+      "lengthMs": 316000,
+      "features": [
+        "Twista",
+        "Jamie Foxx"
+      ]
+    },
+    {
+      "title": "Breathe In, Breathe Out",
+      "album": "The College Dropout",
+      "track": 13,
+      "lengthMs": 246000,
+      "features": [
+        "Ludacris"
+      ]
+    },
+    {
+      "title": "School Spirit",
+      "album": "The College Dropout",
+      "track": 15,
+      "lengthMs": 182000,
+      "features": []
+    },
+    {
+      "title": "Two Words",
+      "album": "The College Dropout",
+      "track": 18,
+      "lengthMs": 266000,
+      "features": [
+        "Mos Def",
+        "Freeway",
+        "The Harlem Boys Choir"
+      ]
+    },
+    {
+      "title": "Through the Wire",
+      "album": "The College Dropout",
+      "track": 19,
+      "lengthMs": 221000,
+      "features": []
+    },
+    {
+      "title": "Family Business",
+      "album": "The College Dropout",
+      "track": 20,
+      "lengthMs": 278000,
+      "features": []
+    },
+    {
+      "title": "Last Call",
+      "album": "The College Dropout",
+      "track": 21,
+      "lengthMs": 760000,
+      "features": []
+    },
+    {
+      "title": "Wake Up Mr. West",
+      "album": "Late Registration",
+      "track": 1,
+      "lengthMs": 41067,
+      "features": []
+    },
+    {
+      "title": "Heard ’Em Say",
+      "album": "Late Registration",
+      "track": 2,
+      "lengthMs": 203733,
+      "features": [
+        "Adam Levine"
+      ]
+    },
+    {
+      "title": "Touch the Sky",
+      "album": "Late Registration",
+      "track": 3,
+      "lengthMs": 236600,
+      "features": [
+        "Lupe Fiasco"
+      ]
+    },
+    {
+      "title": "Gold Digger",
+      "album": "Late Registration",
+      "track": 4,
+      "lengthMs": 207627,
+      "features": [
+        "Jamie Foxx"
+      ]
+    },
+    {
+      "title": "Drive Slow",
+      "album": "Late Registration",
+      "track": 6,
+      "lengthMs": 272227,
+      "features": [
+        "Paul Wall",
+        "GLC"
+      ]
+    },
+    {
+      "title": "My Way Home",
+      "album": "Late Registration",
+      "track": 7,
+      "lengthMs": 103373,
+      "features": [
+        "Common"
+      ]
+    },
+    {
+      "title": "Crack Music",
+      "album": "Late Registration",
+      "track": 8,
+      "lengthMs": 270867,
+      "features": [
+        "The Game"
+      ]
+    },
+    {
+      "title": "Roses",
+      "album": "Late Registration",
+      "track": 9,
+      "lengthMs": 245867,
+      "features": []
+    },
+    {
+      "title": "Bring Me Down",
+      "album": "Late Registration",
+      "track": 10,
+      "lengthMs": 198973,
+      "features": [
+        "Brandy"
+      ]
+    },
+    {
+      "title": "Addiction",
+      "album": "Late Registration",
+      "track": 11,
+      "lengthMs": 267067,
+      "features": []
+    },
+    {
+      "title": "Diamonds From Sierra Leone (remix)",
+      "album": "Late Registration",
+      "track": 13,
+      "lengthMs": 233400,
+      "features": [
+        "JAY-Z"
+      ]
+    },
+    {
+      "title": "We Major",
+      "album": "Late Registration",
+      "track": 14,
+      "lengthMs": 448000,
+      "features": [
+        "Nas",
+        "Really Doe"
+      ]
+    },
+    {
+      "title": "Hey Mama",
+      "album": "Late Registration",
+      "track": 16,
+      "lengthMs": 305067,
+      "features": []
+    },
+    {
+      "title": "Celebration",
+      "album": "Late Registration",
+      "track": 17,
+      "lengthMs": 198440,
+      "features": []
+    },
+    {
+      "title": "Gone",
+      "album": "Late Registration",
+      "track": 19,
+      "lengthMs": 333293,
+      "features": [
+        "Consequence",
+        "Cam’ron"
+      ]
+    },
+    {
+      "title": "Diamonds From Sierra Leone",
+      "album": "Late Registration",
+      "track": 20,
+      "lengthMs": 238400,
+      "features": []
+    },
+    {
+      "title": "Late",
+      "album": "Late Registration",
+      "track": 21,
+      "lengthMs": 230493,
+      "features": []
+    },
+    {
+      "title": "Good Morning",
+      "album": "Graduation",
+      "track": 1,
+      "lengthMs": 195093,
+      "features": []
+    },
+    {
+      "title": "Champion",
+      "album": "Graduation",
+      "track": 2,
+      "lengthMs": 167600,
+      "features": []
+    },
+    {
+      "title": "Stronger",
+      "album": "Graduation",
+      "track": 3,
+      "lengthMs": 311867,
+      "features": []
+    },
+    {
+      "title": "I Wonder",
+      "album": "Graduation",
+      "track": 4,
+      "lengthMs": 243440,
+      "features": []
+    },
+    {
+      "title": "Good Life",
+      "album": "Graduation",
+      "track": 5,
+      "lengthMs": 207000,
+      "features": [
+        "T-Pain"
+      ]
+    },
+    {
+      "title": "Can’t Tell Me Nothing",
+      "album": "Graduation",
+      "track": 6,
+      "lengthMs": 271600,
+      "features": []
+    },
+    {
+      "title": "Barry Bonds",
+      "album": "Graduation",
+      "track": 7,
+      "lengthMs": 204307,
+      "features": [
+        "Lil Wayne"
+      ]
+    },
+    {
+      "title": "Drunk and Hot Girls",
+      "album": "Graduation",
+      "track": 8,
+      "lengthMs": 313227,
+      "features": [
+        "Mos Def"
+      ]
+    },
+    {
+      "title": "Flashing Lights",
+      "album": "Graduation",
+      "track": 9,
+      "lengthMs": 237507,
+      "features": [
+        "Dwele"
+      ]
+    },
+    {
+      "title": "Everything I Am",
+      "album": "Graduation",
+      "track": 10,
+      "lengthMs": 227893,
+      "features": [
+        "DJ Premier"
+      ]
+    },
+    {
+      "title": "The Glory",
+      "album": "Graduation",
+      "track": 11,
+      "lengthMs": 212707,
+      "features": []
+    },
+    {
+      "title": "Homecoming",
+      "album": "Graduation",
+      "track": 12,
+      "lengthMs": 203493,
+      "features": [
+        "Chris Martin"
+      ]
+    },
+    {
+      "title": "Big Brother",
+      "album": "Graduation",
+      "track": 13,
+      "lengthMs": 287560,
+      "features": []
+    },
+    {
+      "title": "Good Night",
+      "album": "Graduation",
+      "track": 14,
+      "lengthMs": 185973,
+      "features": [
+        "Mos Def",
+        "Al Be Back"
+      ]
+    },
+    {
+      "title": "Say You Will",
+      "album": "808s & Heartbreak",
+      "track": 1,
+      "lengthMs": 378000,
+      "features": []
+    },
+    {
+      "title": "Welcome to Heartbreak",
+      "album": "808s & Heartbreak",
+      "track": 2,
+      "lengthMs": 263000,
+      "features": [
+        "Kid Cudi"
+      ]
+    },
+    {
+      "title": "Heartless",
+      "album": "808s & Heartbreak",
+      "track": 3,
+      "lengthMs": 211000,
+      "features": []
+    },
+    {
+      "title": "Amazing",
+      "album": "808s & Heartbreak",
+      "track": 4,
+      "lengthMs": 238000,
+      "features": [
+        "Young Jeezy"
+      ]
+    },
+    {
+      "title": "Love Lockdown",
+      "album": "808s & Heartbreak",
+      "track": 5,
+      "lengthMs": 270000,
+      "features": []
+    },
+    {
+      "title": "Paranoid",
+      "album": "808s & Heartbreak",
+      "track": 6,
+      "lengthMs": 278000,
+      "features": [
+        "Mr Hudson"
+      ]
+    },
+    {
+      "title": "RoboCop",
+      "album": "808s & Heartbreak",
+      "track": 7,
+      "lengthMs": 274000,
+      "features": []
+    },
+    {
+      "title": "Street Lights",
+      "album": "808s & Heartbreak",
+      "track": 8,
+      "lengthMs": 190000,
+      "features": []
+    },
+    {
+      "title": "Bad News",
+      "album": "808s & Heartbreak",
+      "track": 9,
+      "lengthMs": 239000,
+      "features": []
+    },
+    {
+      "title": "See You in My Nightmares",
+      "album": "808s & Heartbreak",
+      "track": 10,
+      "lengthMs": 258000,
+      "features": [
+        "Lil Wayne"
+      ]
+    },
+    {
+      "title": "Coldest Winter",
+      "album": "808s & Heartbreak",
+      "track": 11,
+      "lengthMs": 164000,
+      "features": []
+    },
+    {
+      "title": "Pinocchio Story (freestyle live from Singapore)",
+      "album": "808s & Heartbreak",
+      "track": 12,
+      "lengthMs": 362000,
+      "features": []
+    },
+    {
+      "title": "Dark Fantasy",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 1,
+      "lengthMs": 280787,
+      "features": []
+    },
+    {
+      "title": "Gorgeous",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 2,
+      "lengthMs": 357653,
+      "features": [
+        "Kid Cudi",
+        "Raekwon"
+      ]
+    },
+    {
+      "title": "POWER",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 3,
+      "lengthMs": 292093,
+      "features": []
+    },
+    {
+      "title": "All of the Lights",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 5,
+      "lengthMs": 299613,
+      "features": []
+    },
+    {
+      "title": "Monster",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 6,
+      "lengthMs": 378893,
+      "features": [
+        "JAY Z",
+        "Rick Ross",
+        "Nicki Minaj",
+        "Bon Iver"
+      ]
+    },
+    {
+      "title": "So Appalled",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 7,
+      "lengthMs": 397667,
+      "features": [
+        "JAY Z",
+        "Pusha T",
+        "Prynce Cy Hi",
+        "Swizz Beatz",
+        "RZA"
+      ]
+    },
+    {
+      "title": "Devil in a New Dress",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 8,
+      "lengthMs": 351947,
+      "features": [
+        "Rick Ross"
+      ]
+    },
+    {
+      "title": "Runaway",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 9,
+      "lengthMs": 547733,
+      "features": [
+        "Pusha T"
+      ]
+    },
+    {
+      "title": "Hell of a Life",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 10,
+      "lengthMs": 327787,
+      "features": []
+    },
+    {
+      "title": "Blame Game",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 11,
+      "lengthMs": 469867,
+      "features": [
+        "John Legend"
+      ]
+    },
+    {
+      "title": "Lost in the World",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 12,
+      "lengthMs": 256587,
+      "features": [
+        "Bon Iver"
+      ]
+    },
+    {
+      "title": "Who Will Survive in America",
+      "album": "My Beautiful Dark Twisted Fantasy",
+      "track": 13,
+      "lengthMs": 98200,
+      "features": []
+    },
+    {
+      "title": "No Church in the Wild",
+      "album": "Watch the Throne",
+      "track": 1,
+      "lengthMs": 272000,
+      "features": [
+        "Frank Ocean",
+        "The-Dream"
+      ]
+    },
+    {
+      "title": "Lift Off",
+      "album": "Watch the Throne",
+      "track": 2,
+      "lengthMs": 266000,
+      "features": [
+        "Beyoncé"
+      ]
+    },
+    {
+      "title": "Niggas in Paris",
+      "album": "Watch the Throne",
+      "track": 3,
+      "lengthMs": 219000,
+      "features": []
+    },
+    {
+      "title": "Otis",
+      "album": "Watch the Throne",
+      "track": 4,
+      "lengthMs": 178000,
+      "features": [
+        "Otis Redding"
+      ]
+    },
+    {
+      "title": "Gotta Have It",
+      "album": "Watch the Throne",
+      "track": 5,
+      "lengthMs": 140000,
+      "features": []
+    },
+    {
+      "title": "New Day",
+      "album": "Watch the Throne",
+      "track": 6,
+      "lengthMs": 272000,
+      "features": []
+    },
+    {
+      "title": "That’s My Bitch",
+      "album": "Watch the Throne",
+      "track": 7,
+      "lengthMs": 202000,
+      "features": []
+    },
+    {
+      "title": "Welcome to the Jungle",
+      "album": "Watch the Throne",
+      "track": 8,
+      "lengthMs": 174000,
+      "features": []
+    },
+    {
+      "title": "Who Gon Stop Me",
+      "album": "Watch the Throne",
+      "track": 9,
+      "lengthMs": 256000,
+      "features": []
+    },
+    {
+      "title": "Murder to Excellence",
+      "album": "Watch the Throne",
+      "track": 10,
+      "lengthMs": 300000,
+      "features": []
+    },
+    {
+      "title": "Made in America",
+      "album": "Watch the Throne",
+      "track": 11,
+      "lengthMs": 292000,
+      "features": [
+        "Frank Ocean"
+      ]
+    },
+    {
+      "title": "Why I Love You",
+      "album": "Watch the Throne",
+      "track": 12,
+      "lengthMs": 201000,
+      "features": [
+        "Mr Hudson"
+      ]
+    },
+    {
+      "title": "Illest Motherfucker Alive",
+      "album": "Watch the Throne",
+      "track": 13,
+      "lengthMs": 503000,
+      "features": []
+    },
+    {
+      "title": "H•A•M",
+      "album": "Watch the Throne",
+      "track": 14,
+      "lengthMs": 275000,
+      "features": []
+    },
+    {
+      "title": "Primetime",
+      "album": "Watch the Throne",
+      "track": 15,
+      "lengthMs": 199000,
+      "features": []
+    },
+    {
+      "title": "The Joy",
+      "album": "Watch the Throne",
+      "track": 16,
+      "lengthMs": 317000,
+      "features": [
+        "Curtis Mayfield"
+      ]
+    },
+    {
+      "title": "To the World",
+      "album": "Cruel Summer",
+      "track": 1,
+      "lengthMs": 230947,
+      "features": [
+        "R. Kelly",
+        "Teyana Taylor"
+      ]
+    },
+    {
+      "title": "Clique",
+      "album": "Cruel Summer",
+      "track": 2,
+      "lengthMs": 293613,
+      "features": [
+        "JAY-Z",
+        "Big Sean"
+      ]
+    },
+    {
+      "title": "Mercy.1",
+      "album": "Cruel Summer",
+      "track": 3,
+      "lengthMs": 326347,
+      "features": [
+        "Big Sean",
+        "Pusha T",
+        "2 Chainz"
+      ]
+    },
+    {
+      "title": "New God Flow.1",
+      "album": "Cruel Summer",
+      "track": 4,
+      "lengthMs": 357320,
+      "features": [
+        "Pusha T",
+        "Ghostface Killah"
+      ]
+    },
+    {
+      "title": "The Morning",
+      "album": "Cruel Summer",
+      "track": 5,
+      "lengthMs": 275080,
+      "features": [
+        "Raekwon",
+        "Pusha T",
+        "Common",
+        "2 Chainz",
+        "Cyhi the Prynce",
+        "Kid Cudi",
+        "D’banj"
+      ]
+    },
+    {
+      "title": "Cold.1",
+      "album": "Cruel Summer",
+      "track": 6,
+      "lengthMs": 216253,
+      "features": [
+        "DJ Khaled"
+      ]
+    },
+    {
+      "title": "Higher",
+      "album": "Cruel Summer",
+      "track": 7,
+      "lengthMs": 274480,
+      "features": [
+        "The-Dream",
+        "Pusha T",
+        "Ma$e",
+        "Cocaine 80s"
+      ]
+    },
+    {
+      "title": "Sin City",
+      "album": "Cruel Summer",
+      "track": 8,
+      "lengthMs": 268387,
+      "features": [
+        "John Legend",
+        "Teyana Taylor",
+        "Cyhi the Prynce",
+        "Malik Yusef"
+      ]
+    },
+    {
+      "title": "The One",
+      "album": "Cruel Summer",
+      "track": 9,
+      "lengthMs": 344760,
+      "features": [
+        "Big Sean",
+        "2 Chainz",
+        "Marsha Ambrosius"
+      ]
+    },
+    {
+      "title": "Creepers",
+      "album": "Cruel Summer",
+      "track": 10,
+      "lengthMs": 194227,
+      "features": [
+        "Kid Cudi"
+      ]
+    },
+    {
+      "title": "Bliss",
+      "album": "Cruel Summer",
+      "track": 11,
+      "lengthMs": 210053,
+      "features": [
+        "John Legend",
+        "Teyana Taylor"
+      ]
+    },
+    {
+      "title": "Don’t Like.1",
+      "album": "Cruel Summer",
+      "track": 12,
+      "lengthMs": 283653,
+      "features": [
+        "Chief Keef",
+        "Pusha T",
+        "Big Sean",
+        "Jadakiss"
+      ]
+    },
+    {
+      "title": "On Sight",
+      "album": "Yeezus",
+      "track": 1,
+      "lengthMs": 156893,
+      "features": []
+    },
+    {
+      "title": "Black Skinhead",
+      "album": "Yeezus",
+      "track": 2,
+      "lengthMs": 188306,
+      "features": []
+    },
+    {
+      "title": "I Am a God",
+      "album": "Yeezus",
+      "track": 3,
+      "lengthMs": 231520,
+      "features": [
+        "God"
+      ]
+    },
+    {
+      "title": "New Slaves",
+      "album": "Yeezus",
+      "track": 4,
+      "lengthMs": 256093,
+      "features": []
+    },
+    {
+      "title": "Hold My Liquor",
+      "album": "Yeezus",
+      "track": 5,
+      "lengthMs": 326946,
+      "features": []
+    },
+    {
+      "title": "I’m in It",
+      "album": "Yeezus",
+      "track": 6,
+      "lengthMs": 234853,
+      "features": []
+    },
+    {
+      "title": "Blood on the Leaves",
+      "album": "Yeezus",
+      "track": 7,
+      "lengthMs": 360280,
+      "features": []
+    },
+    {
+      "title": "Guilt Trip",
+      "album": "Yeezus",
+      "track": 8,
+      "lengthMs": 243746,
+      "features": []
+    },
+    {
+      "title": "Send It Up",
+      "album": "Yeezus",
+      "track": 9,
+      "lengthMs": 178040,
+      "features": []
+    },
+    {
+      "title": "Bound 2",
+      "album": "Yeezus",
+      "track": 10,
+      "lengthMs": 229253,
+      "features": []
+    },
+    {
+      "title": "Ultralight Beam",
+      "album": "The Life of Pablo",
+      "track": 1,
+      "lengthMs": 321000,
+      "features": []
+    },
+    {
+      "title": "Father Stretch My Hands, Pt. 1",
+      "album": "The Life of Pablo",
+      "track": 2,
+      "lengthMs": 136000,
+      "features": []
+    },
+    {
+      "title": "Pt. 2",
+      "album": "The Life of Pablo",
+      "track": 3,
+      "lengthMs": 130000,
+      "features": [],
+      "aliases": [
+        "Father Stretch My Hands, Pt. 2"
+      ]
+    },
+    {
+      "title": "Famous",
+      "album": "The Life of Pablo",
+      "track": 4,
+      "lengthMs": 196000,
+      "features": []
+    },
+    {
+      "title": "Feedback",
+      "album": "The Life of Pablo",
+      "track": 5,
+      "lengthMs": 147000,
+      "features": []
+    },
+    {
+      "title": "Low Lights",
+      "album": "The Life of Pablo",
+      "track": 6,
+      "lengthMs": 132000,
+      "features": []
+    },
+    {
+      "title": "Highlights",
+      "album": "The Life of Pablo",
+      "track": 7,
+      "lengthMs": 200000,
+      "features": []
+    },
+    {
+      "title": "Freestyle 4",
+      "album": "The Life of Pablo",
+      "track": 8,
+      "lengthMs": 123000,
+      "features": []
+    },
+    {
+      "title": "I Love Kanye",
+      "album": "The Life of Pablo",
+      "track": 9,
+      "lengthMs": 45000,
+      "features": []
+    },
+    {
+      "title": "Waves",
+      "album": "The Life of Pablo",
+      "track": 10,
+      "lengthMs": 182000,
+      "features": []
+    },
+    {
+      "title": "FML",
+      "album": "The Life of Pablo",
+      "track": 11,
+      "lengthMs": 236000,
+      "features": []
+    },
+    {
+      "title": "Real Friends",
+      "album": "The Life of Pablo",
+      "track": 12,
+      "lengthMs": 252000,
+      "features": []
+    },
+    {
+      "title": "Wolves",
+      "album": "The Life of Pablo",
+      "track": 13,
+      "lengthMs": 302000,
+      "features": []
+    },
+    {
+      "title": "Frank’s Track",
+      "album": "The Life of Pablo",
+      "track": 14,
+      "lengthMs": 38000,
+      "features": []
+    },
+    {
+      "title": "Siiiiiiiiilver Surffffeeeeer Intermission",
+      "album": "The Life of Pablo",
+      "track": 15,
+      "lengthMs": 57000,
+      "features": []
+    },
+    {
+      "title": "30 Hours",
+      "album": "The Life of Pablo",
+      "track": 16,
+      "lengthMs": 323000,
+      "features": []
+    },
+    {
+      "title": "No More Parties in LA",
+      "album": "The Life of Pablo",
+      "track": 17,
+      "lengthMs": 374000,
+      "features": []
+    },
+    {
+      "title": "Facts (Charlie Heat version)",
+      "album": "The Life of Pablo",
+      "track": 18,
+      "lengthMs": 201000,
+      "features": []
+    },
+    {
+      "title": "Fade",
+      "album": "The Life of Pablo",
+      "track": 19,
+      "lengthMs": 194000,
+      "features": []
+    },
+    {
+      "title": "Saint Pablo",
+      "album": "The Life of Pablo",
+      "track": 20,
+      "lengthMs": 372000,
+      "features": []
+    },
+    {
+      "title": "I Thought About Killing You",
+      "album": "ye",
+      "track": 1,
+      "lengthMs": 273000,
+      "features": []
+    },
+    {
+      "title": "Yikes",
+      "album": "ye",
+      "track": 2,
+      "lengthMs": 191000,
+      "features": []
+    },
+    {
+      "title": "All Mine",
+      "album": "ye",
+      "track": 3,
+      "lengthMs": 147000,
+      "features": []
+    },
+    {
+      "title": "Wouldn’t Leave",
+      "album": "ye",
+      "track": 4,
+      "lengthMs": 206000,
+      "features": [
+        "PARTYNEXTDOOR"
+      ]
+    },
+    {
+      "title": "No Mistakes",
+      "album": "ye",
+      "track": 5,
+      "lengthMs": 124000,
+      "features": []
+    },
+    {
+      "title": "Ghost Town",
+      "album": "ye",
+      "track": 6,
+      "lengthMs": 270000,
+      "features": [
+        "PARTYNEXTDOOR"
+      ]
+    },
+    {
+      "title": "Violent Crimes",
+      "album": "ye",
+      "track": 7,
+      "lengthMs": 214000,
+      "features": []
+    },
+    {
+      "title": "Feel the Love",
+      "album": "Kids See Ghosts",
+      "track": 1,
+      "lengthMs": 165053,
+      "features": [
+        "Pusha T"
+      ]
+    },
+    {
+      "title": "Fire",
+      "album": "Kids See Ghosts",
+      "track": 2,
+      "lengthMs": 140527,
+      "features": []
+    },
+    {
+      "title": "4th Dimension",
+      "album": "Kids See Ghosts",
+      "track": 3,
+      "lengthMs": 153351,
+      "features": [
+        "Louis Prima"
+      ]
+    },
+    {
+      "title": "Freeee (Ghost Town, Pt. 2)",
+      "album": "Kids See Ghosts",
+      "track": 4,
+      "lengthMs": 206605,
+      "features": [
+        "Ty Dolla $ign"
+      ]
+    },
+    {
+      "title": "Reborn",
+      "album": "Kids See Ghosts",
+      "track": 5,
+      "lengthMs": 324674,
+      "features": []
+    },
+    {
+      "title": "Kids See Ghosts",
+      "album": "Kids See Ghosts",
+      "track": 6,
+      "lengthMs": 245098,
+      "features": [
+        "Yasiin Bey"
+      ]
+    },
+    {
+      "title": "Cudi Montage",
+      "album": "Kids See Ghosts",
+      "track": 7,
+      "lengthMs": 197001,
+      "features": []
+    },
+    {
+      "title": "Every Hour",
+      "album": "Jesus Is King",
+      "track": 1,
+      "lengthMs": 112239,
+      "features": [
+        "Sunday Service"
+      ]
+    },
+    {
+      "title": "Selah",
+      "album": "Jesus Is King",
+      "track": 2,
+      "lengthMs": 164619,
+      "features": []
+    },
+    {
+      "title": "Follow God",
+      "album": "Jesus Is King",
+      "track": 3,
+      "lengthMs": 104591,
+      "features": []
+    },
+    {
+      "title": "Closed on Sunday",
+      "album": "Jesus Is King",
+      "track": 4,
+      "lengthMs": 151873,
+      "features": []
+    },
+    {
+      "title": "On God",
+      "album": "Jesus Is King",
+      "track": 5,
+      "lengthMs": 136350,
+      "features": []
+    },
+    {
+      "title": "Everything We Need",
+      "album": "Jesus Is King",
+      "track": 6,
+      "lengthMs": 116559,
+      "features": [
+        "Ty Dolla $ign",
+        "Ant Clemons"
+      ]
+    },
+    {
+      "title": "Water",
+      "album": "Jesus Is King",
+      "track": 7,
+      "lengthMs": 168419,
+      "features": [
+        "Ant Clemons"
+      ]
+    },
+    {
+      "title": "God Is",
+      "album": "Jesus Is King",
+      "track": 8,
+      "lengthMs": 203141,
+      "features": []
+    },
+    {
+      "title": "Hands On",
+      "album": "Jesus Is King",
+      "track": 9,
+      "lengthMs": 203174,
+      "features": [
+        "Fred Hammond"
+      ]
+    },
+    {
+      "title": "Use This Gospel",
+      "album": "Jesus Is King",
+      "track": 10,
+      "lengthMs": 213877,
+      "features": [
+        "Clipse",
+        "Kenny G"
+      ]
+    },
+    {
+      "title": "Jesus Is Lord",
+      "album": "Jesus Is King",
+      "track": 11,
+      "lengthMs": 49292,
+      "features": []
+    },
+    {
+      "title": "Donda Chant",
+      "album": "Donda",
+      "track": 1,
+      "lengthMs": 52062,
+      "features": []
+    },
+    {
+      "title": "Jail",
+      "album": "Donda",
+      "track": 2,
+      "lengthMs": 297000,
+      "features": []
+    },
+    {
+      "title": "God Breathed",
+      "album": "Donda",
+      "track": 3,
+      "lengthMs": 333462,
+      "features": []
+    },
+    {
+      "title": "Off the Grid",
+      "album": "Donda",
+      "track": 4,
+      "lengthMs": 339250,
+      "features": []
+    },
+    {
+      "title": "Hurricane",
+      "album": "Donda",
+      "track": 5,
+      "lengthMs": 243188,
+      "features": []
+    },
+    {
+      "title": "Praise God",
+      "album": "Donda",
+      "track": 6,
+      "lengthMs": 226653,
+      "features": []
+    },
+    {
+      "title": "Jonah",
+      "album": "Donda",
+      "track": 7,
+      "lengthMs": 195170,
+      "features": []
+    },
+    {
+      "title": "Ok Ok",
+      "album": "Donda",
+      "track": 8,
+      "lengthMs": 204630,
+      "features": []
+    },
+    {
+      "title": "Junya",
+      "album": "Donda",
+      "track": 9,
+      "lengthMs": 147669,
+      "features": []
+    },
+    {
+      "title": "Believe What I Say",
+      "album": "Donda",
+      "track": 10,
+      "lengthMs": 242400,
+      "features": []
+    },
+    {
+      "title": "24",
+      "album": "Donda",
+      "track": 11,
+      "lengthMs": 197898,
+      "features": []
+    },
+    {
+      "title": "Remote Control",
+      "album": "Donda",
+      "track": 12,
+      "lengthMs": 198614,
+      "features": []
+    },
+    {
+      "title": "Moon",
+      "album": "Donda",
+      "track": 13,
+      "lengthMs": 156091,
+      "features": []
+    },
+    {
+      "title": "Heaven and Hell",
+      "album": "Donda",
+      "track": 14,
+      "lengthMs": 145301,
+      "features": []
+    },
+    {
+      "title": "Donda",
+      "album": "Donda",
+      "track": 15,
+      "lengthMs": 128313,
+      "features": []
+    },
+    {
+      "title": "Keep My Spirit Alive",
+      "album": "Donda",
+      "track": 16,
+      "lengthMs": 221386,
+      "features": []
+    },
+    {
+      "title": "Jesus Lord",
+      "album": "Donda",
+      "track": 17,
+      "lengthMs": 538537,
+      "features": []
+    },
+    {
+      "title": "New Again",
+      "album": "Donda",
+      "track": 18,
+      "lengthMs": 183297,
+      "features": []
+    },
+    {
+      "title": "Tell the Vision",
+      "album": "Donda",
+      "track": 19,
+      "lengthMs": 104219,
+      "features": []
+    },
+    {
+      "title": "Lord I Need You",
+      "album": "Donda",
+      "track": 20,
+      "lengthMs": 162108,
+      "features": []
+    },
+    {
+      "title": "Pure Souls",
+      "album": "Donda",
+      "track": 21,
+      "lengthMs": 358622,
+      "features": []
+    },
+    {
+      "title": "Come to Life",
+      "album": "Donda",
+      "track": 22,
+      "lengthMs": 310394,
+      "features": []
+    },
+    {
+      "title": "No Child Left Behind",
+      "album": "Donda",
+      "track": 23,
+      "lengthMs": 178061,
+      "features": []
+    },
+    {
+      "title": "Jail, Pt. 2",
+      "album": "Donda",
+      "track": 24,
+      "lengthMs": 297000,
+      "features": []
+    },
+    {
+      "title": "Ok Ok, Pt. 2",
+      "album": "Donda",
+      "track": 25,
+      "lengthMs": 204630,
+      "features": []
+    },
+    {
+      "title": "Junya, Pt. 2",
+      "album": "Donda",
+      "track": 26,
+      "lengthMs": 182635,
+      "features": []
+    },
+    {
+      "title": "Jesus Lord, Pt. 2",
+      "album": "Donda",
+      "track": 27,
+      "lengthMs": 690732,
+      "features": []
+    }
+  ]
+}
