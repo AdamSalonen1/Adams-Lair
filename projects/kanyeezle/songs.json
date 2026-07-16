@@ -1,6 +1,10 @@
 {
   "generated": "2026-07-16",
-  "source": "MusicBrainz",
+  "source": [
+    "MusicBrainz (track numbers, lengths, titles)",
+    "Wikipedia, CC BY-SA (features)",
+    "manual review"
+  ],
   "albums": [
     {
       "name": "The College Dropout",
@@ -492,7 +496,8 @@
       "track": 4,
       "lengthMs": 238000,
       "features": [
-        "Young Jeezy"
+        "Young Jeezy",
+        "Mr Hudson"
       ]
     },
     {
@@ -508,7 +513,8 @@
       "track": 6,
       "lengthMs": 278000,
       "features": [
-        "Mr Hudson"
+        "Mr Hudson",
+        "Kid Cudi"
       ]
     },
     {
@@ -560,7 +566,12 @@
       "album": "My Beautiful Dark Twisted Fantasy",
       "track": 1,
       "lengthMs": 280787,
-      "features": []
+      "features": [
+        "Nicki Minaj",
+        "Justin Vernon",
+        "Teyana Taylor",
+        "Amber Rose"
+      ]
     },
     {
       "title": "Gorgeous",
@@ -577,14 +588,28 @@
       "album": "My Beautiful Dark Twisted Fantasy",
       "track": 3,
       "lengthMs": 292093,
-      "features": []
+      "features": [
+        "Dwele"
+      ]
     },
     {
       "title": "All of the Lights",
       "album": "My Beautiful Dark Twisted Fantasy",
       "track": 5,
       "lengthMs": 299613,
-      "features": []
+      "features": [
+        "Rihanna",
+        "Kid Cudi",
+        "The-Dream",
+        "Charlie Wilson",
+        "John Legend",
+        "La Roux",
+        "Alicia Keys",
+        "Elton John",
+        "Fergie",
+        "Ryan Leslie",
+        "Drake"
+      ]
     },
     {
       "title": "Monster",
@@ -626,7 +651,8 @@
       "track": 9,
       "lengthMs": 547733,
       "features": [
-        "Pusha T"
+        "Pusha T",
+        "The-Dream"
       ]
     },
     {
@@ -634,7 +660,10 @@
       "album": "My Beautiful Dark Twisted Fantasy",
       "track": 10,
       "lengthMs": 327787,
-      "features": []
+      "features": [
+        "Teyana Taylor",
+        "The-Dream"
+      ]
     },
     {
       "title": "Blame Game",
@@ -642,7 +671,8 @@
       "track": 11,
       "lengthMs": 469867,
       "features": [
-        "John Legend"
+        "John Legend",
+        "Chris Rock"
       ]
     },
     {
@@ -651,7 +681,10 @@
       "track": 12,
       "lengthMs": 256587,
       "features": [
-        "Bon Iver"
+        "Bon Iver",
+        "Charlie Wilson",
+        "Alicia Keys",
+        "La Roux"
       ]
     },
     {
@@ -659,7 +692,11 @@
       "album": "My Beautiful Dark Twisted Fantasy",
       "track": 13,
       "lengthMs": 98200,
-      "features": []
+      "features": [
+        "Charlie Wilson",
+        "Alicia Keys",
+        "La Roux"
+      ]
     },
     {
       "title": "No Church in the Wild",
@@ -677,7 +714,9 @@
       "track": 2,
       "lengthMs": 266000,
       "features": [
-        "Beyoncé"
+        "Beyoncé",
+        "Seal",
+        "Mr Hudson"
       ]
     },
     {
@@ -701,7 +740,9 @@
       "album": "Watch the Throne",
       "track": 5,
       "lengthMs": 140000,
-      "features": []
+      "features": [
+        "Kid Cudi"
+      ]
     },
     {
       "title": "New Day",
@@ -715,28 +756,38 @@
       "album": "Watch the Throne",
       "track": 7,
       "lengthMs": 202000,
-      "features": []
+      "features": [
+        "La Roux",
+        "Justin Vernon"
+      ]
     },
     {
       "title": "Welcome to the Jungle",
       "album": "Watch the Throne",
       "track": 8,
       "lengthMs": 174000,
-      "features": []
+      "features": [
+        "Swizz Beatz"
+      ]
     },
     {
       "title": "Who Gon Stop Me",
       "album": "Watch the Throne",
       "track": 9,
       "lengthMs": 256000,
-      "features": []
+      "features": [
+        "Mr Hudson",
+        "Swizz Beatz"
+      ]
     },
     {
       "title": "Murder to Excellence",
       "album": "Watch the Throne",
       "track": 10,
       "lengthMs": 300000,
-      "features": []
+      "features": [
+        "Kid Cudi"
+      ]
     },
     {
       "title": "Made in America",
@@ -761,7 +812,9 @@
       "album": "Watch the Throne",
       "track": 13,
       "lengthMs": 503000,
-      "features": []
+      "features": [
+        "Kid Cudi"
+      ]
     },
     {
       "title": "H•A•M",
@@ -783,7 +836,10 @@
       "track": 16,
       "lengthMs": 317000,
       "features": [
-        "Curtis Mayfield"
+        "Curtis Mayfield",
+        "Pete Rock",
+        "Kid Cudi",
+        "Charlie Wilson"
       ]
     },
     {
@@ -860,7 +916,9 @@
         "The-Dream",
         "Pusha T",
         "Ma$e",
-        "Cocaine 80s"
+        "Cocaine 80s",
+        "John Legend",
+        "2 Chainz"
       ]
     },
     {
@@ -872,7 +930,8 @@
         "John Legend",
         "Teyana Taylor",
         "Cyhi the Prynce",
-        "Malik Yusef"
+        "Malik Yusef",
+        "Travis Scott"
       ]
     },
     {
@@ -937,7 +996,8 @@
       "track": 3,
       "lengthMs": 231520,
       "features": [
-        "God"
+        "God",
+        "Justin Vernon"
       ]
     },
     {
@@ -945,21 +1005,29 @@
       "album": "Yeezus",
       "track": 4,
       "lengthMs": 256093,
-      "features": []
+      "features": [
+        "Frank Ocean"
+      ]
     },
     {
       "title": "Hold My Liquor",
       "album": "Yeezus",
       "track": 5,
       "lengthMs": 326946,
-      "features": []
+      "features": [
+        "Chief Keef",
+        "Justin Vernon"
+      ]
     },
     {
       "title": "I’m in It",
       "album": "Yeezus",
       "track": 6,
       "lengthMs": 234853,
-      "features": []
+      "features": [
+        "Justin Vernon",
+        "Assassin"
+      ]
     },
     {
       "title": "Blood on the Leaves",
@@ -973,42 +1041,58 @@
       "album": "Yeezus",
       "track": 8,
       "lengthMs": 243746,
-      "features": []
+      "features": [
+        "Kid Cudi"
+      ]
     },
     {
       "title": "Send It Up",
       "album": "Yeezus",
       "track": 9,
       "lengthMs": 178040,
-      "features": []
+      "features": [
+        "King Louie"
+      ]
     },
     {
       "title": "Bound 2",
       "album": "Yeezus",
       "track": 10,
       "lengthMs": 229253,
-      "features": []
+      "features": [
+        "Charlie Wilson"
+      ]
     },
     {
       "title": "Ultralight Beam",
       "album": "The Life of Pablo",
       "track": 1,
       "lengthMs": 321000,
-      "features": []
+      "features": [
+        "Chance the Rapper",
+        "Kirk Franklin",
+        "The-Dream",
+        "Kelly Price"
+      ]
     },
     {
       "title": "Father Stretch My Hands, Pt. 1",
       "album": "The Life of Pablo",
       "track": 2,
       "lengthMs": 136000,
-      "features": []
+      "features": [
+        "Kid Cudi",
+        "Kelly Price"
+      ]
     },
     {
       "title": "Pt. 2",
       "album": "The Life of Pablo",
       "track": 3,
       "lengthMs": 130000,
-      "features": [],
+      "features": [
+        "Desiigner"
+      ],
       "aliases": [
         "Father Stretch My Hands, Pt. 2"
       ]
@@ -1018,7 +1102,10 @@
       "album": "The Life of Pablo",
       "track": 4,
       "lengthMs": 196000,
-      "features": []
+      "features": [
+        "Rihanna",
+        "Swizz Beatz"
+      ]
     },
     {
       "title": "Feedback",
@@ -1039,14 +1126,21 @@
       "album": "The Life of Pablo",
       "track": 7,
       "lengthMs": 200000,
-      "features": []
+      "features": [
+        "Young Thug",
+        "The-Dream",
+        "El DeBarge",
+        "Kelly Price"
+      ]
     },
     {
       "title": "Freestyle 4",
       "album": "The Life of Pablo",
       "track": 8,
       "lengthMs": 123000,
-      "features": []
+      "features": [
+        "Desiigner"
+      ]
     },
     {
       "title": "I Love Kanye",
@@ -1060,56 +1154,75 @@
       "album": "The Life of Pablo",
       "track": 10,
       "lengthMs": 182000,
-      "features": []
+      "features": [
+        "Chris Brown",
+        "Kid Cudi"
+      ]
     },
     {
       "title": "FML",
       "album": "The Life of Pablo",
       "track": 11,
       "lengthMs": 236000,
-      "features": []
+      "features": [
+        "The Weeknd"
+      ]
     },
     {
       "title": "Real Friends",
       "album": "The Life of Pablo",
       "track": 12,
       "lengthMs": 252000,
-      "features": []
+      "features": [
+        "Ty Dolla Sign"
+      ]
     },
     {
       "title": "Wolves",
       "album": "The Life of Pablo",
       "track": 13,
       "lengthMs": 302000,
-      "features": []
+      "features": [
+        "Vic Mensa",
+        "Sia"
+      ]
     },
     {
       "title": "Frank’s Track",
       "album": "The Life of Pablo",
       "track": 14,
       "lengthMs": 38000,
-      "features": []
+      "features": [
+        "Frank Ocean"
+      ]
     },
     {
       "title": "Siiiiiiiiilver Surffffeeeeer Intermission",
       "album": "The Life of Pablo",
       "track": 15,
       "lengthMs": 57000,
-      "features": []
+      "features": [
+        "Max B",
+        "French Montana"
+      ]
     },
     {
       "title": "30 Hours",
       "album": "The Life of Pablo",
       "track": 16,
       "lengthMs": 323000,
-      "features": []
+      "features": [
+        "André 3000"
+      ]
     },
     {
       "title": "No More Parties in LA",
       "album": "The Life of Pablo",
       "track": 17,
       "lengthMs": 374000,
-      "features": []
+      "features": [
+        "Kendrick Lamar"
+      ]
     },
     {
       "title": "Facts (Charlie Heat version)",
@@ -1123,14 +1236,19 @@
       "album": "The Life of Pablo",
       "track": 19,
       "lengthMs": 194000,
-      "features": []
+      "features": [
+        "Post Malone",
+        "Ty Dolla Sign"
+      ]
     },
     {
       "title": "Saint Pablo",
       "album": "The Life of Pablo",
       "track": 20,
       "lengthMs": 372000,
-      "features": []
+      "features": [
+        "Sampha"
+      ]
     },
     {
       "title": "I Thought About Killing You",
@@ -1343,21 +1461,28 @@
       "album": "Donda",
       "track": 2,
       "lengthMs": 297000,
-      "features": []
+      "features": [
+        "Jay-Z"
+      ]
     },
     {
       "title": "God Breathed",
       "album": "Donda",
       "track": 3,
       "lengthMs": 333462,
-      "features": []
+      "features": [
+        "Vory"
+      ]
     },
     {
       "title": "Off the Grid",
       "album": "Donda",
       "track": 4,
       "lengthMs": 339250,
-      "features": []
+      "features": [
+        "Playboi Carti",
+        "Fivio Foreign"
+      ]
     },
     {
       "title": "Hurricane",
@@ -1371,28 +1496,38 @@
       "album": "Donda",
       "track": 6,
       "lengthMs": 226653,
-      "features": []
+      "features": [
+        "Travis Scott",
+        "Baby Keem"
+      ]
     },
     {
       "title": "Jonah",
       "album": "Donda",
       "track": 7,
       "lengthMs": 195170,
-      "features": []
+      "features": [
+        "Vory",
+        "Lil Durk"
+      ]
     },
     {
       "title": "Ok Ok",
       "album": "Donda",
       "track": 8,
       "lengthMs": 204630,
-      "features": []
+      "features": [
+        "Lil Yachty"
+      ]
     },
     {
       "title": "Junya",
       "album": "Donda",
       "track": 9,
       "lengthMs": 147669,
-      "features": []
+      "features": [
+        "Playboi Carti"
+      ]
     },
     {
       "title": "Believe What I Say",
@@ -1413,14 +1548,19 @@
       "album": "Donda",
       "track": 12,
       "lengthMs": 198614,
-      "features": []
+      "features": [
+        "Young Thug"
+      ]
     },
     {
       "title": "Moon",
       "album": "Donda",
       "track": 13,
       "lengthMs": 156091,
-      "features": []
+      "features": [
+        "Don Toliver",
+        "Kid Cudi"
+      ]
     },
     {
       "title": "Heaven and Hell",
@@ -1441,14 +1581,19 @@
       "album": "Donda",
       "track": 16,
       "lengthMs": 221386,
-      "features": []
+      "features": [
+        "Westside Gunn",
+        "Conway the Machine"
+      ]
     },
     {
       "title": "Jesus Lord",
       "album": "Donda",
       "track": 17,
       "lengthMs": 538537,
-      "features": []
+      "features": [
+        "Jay Electronica"
+      ]
     },
     {
       "title": "New Again",
@@ -1462,7 +1607,9 @@
       "album": "Donda",
       "track": 19,
       "lengthMs": 104219,
-      "features": []
+      "features": [
+        "Pop Smoke"
+      ]
     },
     {
       "title": "Lord I Need You",
@@ -1476,7 +1623,10 @@
       "album": "Donda",
       "track": 21,
       "lengthMs": 358622,
-      "features": []
+      "features": [
+        "Roddy Ricch",
+        "Shenseea"
+      ]
     },
     {
       "title": "Come to Life",
@@ -1490,35 +1640,48 @@
       "album": "Donda",
       "track": 23,
       "lengthMs": 178061,
-      "features": []
+      "features": [
+        "Vory"
+      ]
     },
     {
       "title": "Jail, Pt. 2",
       "album": "Donda",
       "track": 24,
       "lengthMs": 297000,
-      "features": []
+      "features": [
+        "DaBaby",
+        "Marilyn Manson"
+      ]
     },
     {
       "title": "Ok Ok, Pt. 2",
       "album": "Donda",
       "track": 25,
       "lengthMs": 204630,
-      "features": []
+      "features": [
+        "Shenseea"
+      ]
     },
     {
       "title": "Junya, Pt. 2",
       "album": "Donda",
       "track": 26,
       "lengthMs": 182635,
-      "features": []
+      "features": [
+        "Playboi Carti",
+        "Ty Dolla Sign"
+      ]
     },
     {
       "title": "Jesus Lord, Pt. 2",
       "album": "Donda",
       "track": 27,
       "lengthMs": 690732,
-      "features": []
+      "features": [
+        "Jay Electronica",
+        "The Lox"
+      ]
     }
   ]
 }

@@ -1,7 +1,24 @@
 /**
- * Builds projects/kanyeezle/songs.json from MusicBrainz.
+ * RETIRED — do not run this against projects/kanyeezle/songs.json.
  *
- * Run: node tools/build-songs.mjs
+ * songs.json is now the source of truth and is hand-maintained. This script
+ * regenerates it wholesale from MusicBrainz, which would destroy every featured
+ * artist in it: MusicBrainz credits all of The Life of Pablo and Donda to Kanye
+ * West alone, so a re-run silently blanks the features on ~47 songs.
+ *
+ * That is not a MusicBrainz bug. Donda shipped with no feature credits at all
+ * (only "Jail" and "Hurricane" carry a "with"), and TLOP's final 20-track
+ * release — the one people stream, pinned below — is credited solely to West.
+ * The March 2016 TLOP releases do carry credits, but on a different tracklist,
+ * so no single pin gives both correct track numbers and correct features.
+ *
+ * Kept for two reasons only:
+ *   1. Provenance — the pinned release MBIDs below are where songs.json's track
+ *      numbers and lengths came from.
+ *   2. Bootstrapping a NEW album. Point ALBUMS at just the new release, run it,
+ *      and hand-merge the rows it prints. Never let it overwrite the whole file.
+ *
+ * Original notes follow.
  *
  * Release MBIDs are pinned deliberately. MusicBrainz has dozens of releases per
  * album (clean edits, Japanese bonus discs, vinyl splits, bootlegs) and they
@@ -11,7 +28,19 @@
  */
 
 const UA = 'KanYeezle/0.1 ( adam.salonen@gmail.com )';
-const OUT = new URL('../projects/kanyeezle/songs.json', import.meta.url);
+
+// Writes beside this script, never onto the real songs.json. Merge by hand.
+const OUT = new URL('./songs.generated.json', import.meta.url);
+
+if (!process.argv.includes('--bootstrap')) {
+  console.error(
+    'build-songs.mjs is retired. songs.json is hand-maintained and a full\n' +
+    'regeneration would blank the features on ~47 songs (all of TLOP and Donda).\n\n' +
+    'To bootstrap a new album: point ALBUMS at just that release, re-run with\n' +
+    '--bootstrap, and hand-merge the rows from tools/archive/songs.generated.json.'
+  );
+  process.exit(1);
+}
 
 // Ordered by release date -- the game's album-adjacency ("close" = yellow) logic
 // depends on this array order, so keep it chronological.
