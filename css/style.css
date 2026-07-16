@@ -136,6 +136,25 @@ img { max-width: 100%; display: block; }
   margin-bottom: 28px;
 }
 
+.hero-quote {
+  border-left: 4px solid var(--orange);
+  padding: 4px 0 4px 18px;
+  margin-bottom: 28px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+.hero-quote cite {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--red-deep);
+}
+
 .hero-photo {
   position: relative;
 }
