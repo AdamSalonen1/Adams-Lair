@@ -295,6 +295,33 @@ img { max-width: 100%; display: block; }
   background: linear-gradient(transparent, rgba(43, 26, 18, 0.75));
 }
 
+/* ===== Projects ===== */
+.projects-main { padding-top: 56px; }
+
+.projects-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.02em;
+  margin: 18px 0 8px;
+}
+
+.project-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.project-card h3 { color: var(--ink); }
+
+.card-cta {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--orange-deep);
+}
+
+.project-card:hover .card-cta { color: var(--red-deep); }
+
 /* ===== Stub pages ===== */
 .stub {
   min-height: 55vh;

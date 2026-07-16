@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KanYeezle — Adam's Lair</title>
+  <meta name="description" content="A daily Kanye West song guessing game, College Dropout through Donda. Eight guesses, four clues.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="kanyeezle.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐻</text></svg>">
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="wrap">
+      <a class="brand" href="../../index.html">Adam's <span class="flame">Lair</span></a>
+      <ul>
+        <li><a href="../../index.html">Home</a></li>
+        <li><a href="../../about.html">About</a></li>
+        <li><a href="../../projects.html" class="active">Projects</a></li>
+        <li><a href="../../contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="game-wrap">
+
+    <header class="game-head">
+      <span class="kicker" id="puzzle-no">Daily puzzle</span>
+      <h1>Kan<span class="gradient">Yeezle</span></h1>
+      <p class="game-sub">
+        Guess the mystery Ye song in 8 tries. Every album from
+        <em>The College Dropout</em> to <em>Donda</em> — back when he was still Kanye.
+      </p>
+    </header>
+
+    <section class="guess-area" id="guess-area" hidden>
+      <div class="combo">
+        <input
+          type="text"
+          id="guess-input"
+          class="guess-input"
+          placeholder="Type a Kanye song…"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          role="combobox"
+          aria-expanded="false"
+          aria-autocomplete="list"
+          aria-controls="suggestions"
+        >
+        <ul class="suggestions" id="suggestions" role="listbox" hidden></ul>
+      </div>
+      <p class="guesses-left" id="guesses-left"></p>
+    </section>
+
+    <section class="board-area">
+      <div class="board-scroll">
+        <div class="board" id="board">
+          <div class="board-head" role="row">
+            <span>Song</span>
+            <span>Album</span>
+            <span>Track</span>
+            <span>Length</span>
+            <span>Features</span>
+          </div>
+          <div id="rows"></div>
+        </div>
+      </div>
+      <p class="loading" id="loading">Loading songs…</p>
+    </section>
+
+    <section class="result" id="result" hidden>
+      <p class="result-line" id="result-line"></p>
+      <p class="result-answer" id="result-answer"></p>
+      <button type="button" class="share-btn" id="share-btn">Share result</button>
+      <p class="share-note" id="share-note" aria-live="polite"></p>
+    </section>
+
+    <details class="how">
+      <summary>How to play</summary>
+      <div class="how-body">
+        <p>
+          One song is chosen each day at local midnight — everyone gets the same one.
+          Each guess is scored against the answer on four clues:
+        </p>
+        <ul>
+          <li><b class="sw g"></b> <b>Green</b> — exact match.</li>
+          <li><b class="sw y"></b> <b>Yellow</b> — close. An album on either side chronologically, a track number within 2, a length within 30 seconds, or at least one shared featured artist.</li>
+          <li><b class="sw n"></b> <b>Grey</b> — not close.</li>
+        </ul>
+        <p>
+          Arrows point toward the answer. On <b>Album</b>, ↑ means the answer is on a
+          later record and ↓ an earlier one. On <b>Track</b> and <b>Length</b>, ↑ means
+          a higher track number or a longer song, ↓ lower or shorter.
+        </p>
+        <p class="how-foot">
+          Songs, track numbers, lengths and credits come from
+          <a href="https://musicbrainz.org" rel="noopener">MusicBrainz</a>. Skits are excluded.
+        </p>
+      </div>
+    </details>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Adam Salonen · Adam's Lair</span>
+      <span>Built with an unreasonable amount of orange 🧡</span>
+    </div>
+  </footer>
+
+  <script src="logic.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
