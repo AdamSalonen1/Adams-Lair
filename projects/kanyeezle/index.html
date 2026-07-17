@@ -78,6 +78,36 @@
       <p class="share-note" id="share-note" aria-live="polite"></p>
     </section>
 
+    <section class="social" id="social" hidden>
+      <div class="name-bar">
+        <form id="name-form">
+          <label for="name-input">Pick a name for the leaderboard &amp; chat</label>
+          <input id="name-input" maxlength="20" placeholder="Your name" autocomplete="nickname">
+          <button type="submit">Save</button>
+        </form>
+        <p class="name-current" id="name-current" hidden>
+          Playing as <b id="name-display"></b>
+          <button type="button" class="name-change" id="name-change">change</button>
+        </p>
+      </div>
+
+      <div class="social-grid">
+        <div class="panel">
+          <h2>Today's leaderboard</h2>
+          <ol class="lb" id="lb-list"></ol>
+          <p class="panel-note" id="lb-note"></p>
+        </div>
+        <div class="panel">
+          <h2>Chat</h2>
+          <div class="chat-log" id="chat-log" aria-live="polite"></div>
+          <form class="chat-form" id="chat-form">
+            <input id="chat-input" maxlength="280" placeholder="Say something…" autocomplete="off">
+            <button type="submit" id="chat-send">Send</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
     <details class="how">
       <summary>How to play</summary>
       <div class="how-body">
@@ -121,5 +151,7 @@
 
   <script src="logic.js"></script>
   <script src="game.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="social.js"></script>
 </body>
 </html>

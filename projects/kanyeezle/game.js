@@ -11,7 +11,7 @@
   var scorer = null;
   var answer = null;
   var day = 0;
-  var state = { day: 0, guesses: [], status: 'playing' };
+  var state = { day: 0, guesses: [], status: 'playing', startedAt: 0, elapsedMs: 0 };
 
   var el = {
     guessArea: document.getElementById('guess-area'),
@@ -93,10 +93,12 @@
     el.guessesLeft.textContent = left + (left === 1 ? ' guess left' : ' guesses left');
 
     if (over) {
-      el.resultLine.textContent =
+      var line =
         state.status === 'won'
           ? 'Got it in ' + state.guesses.length + '/' + L.MAX_GUESSES
           : 'Out of guesses';
+      if (state.status === 'won' && state.elapsedMs) line += ' · ' + L.fmtLength(state.elapsedMs);
+      el.resultLine.textContent = line;
       el.resultAnswer.textContent = answer.title + ' — ' + answer.album;
       el.shareNote.textContent = '';
     }
@@ -121,18 +123,39 @@
     }
   }
 
+  // Tell social.js (leaderboard + chat) the round is over, without coupling
+  // the game to it — the game works fine if nothing is listening.
+  function announceFinish() {
+    if (state.status === 'playing') return;
+    document.dispatchEvent(
+      new CustomEvent('kanyeezle:finished', {
+        detail: {
+          day: day,
+          won: state.status === 'won',
+          guesses: state.guesses.length,
+          timeMs: state.elapsedMs || 0
+        }
+      })
+    );
+  }
+
   function submit(song) {
     if (state.status !== 'playing') return;
     if (state.guesses.indexOf(song.title) !== -1) return; // already guessed
 
+    if (!state.startedAt) state.startedAt = Date.now(); // clock runs from the first guess
+
     state.guesses.push(song.title);
     if (song.title === answer.title) state.status = 'won';
     else if (state.guesses.length >= L.MAX_GUESSES) state.status = 'lost';
+    if (state.status !== 'playing') state.elapsedMs = Date.now() - state.startedAt;
 
     save();
     render();
     el.input.value = '';
     closeSuggestions();
+    if (state.status === 'playing') el.input.focus();
+    announceFinish();
   }
 
   /* ===== share ===== */
@@ -145,6 +168,7 @@
       (day + 1) +
       '  ' +
       (state.status === 'won' ? state.guesses.length + '/' + L.MAX_GUESSES : 'X/' + L.MAX_GUESSES);
+    if (state.status === 'won' && state.elapsedMs) head += ' · ' + L.fmtLength(state.elapsedMs);
     var grid = state.guesses.map(function (title) {
       var s = scorer.score(findSong(title), answer);
       return EMOJI[s.album] + EMOJI[s.track] + EMOJI[s.length] + EMOJI[s.features];
@@ -196,6 +220,7 @@
       var li = document.createElement('li');
       li.setAttribute('role', 'option');
       li.setAttribute('aria-selected', 'false');
+      li.tabIndex = 0; // reachable with Tab from the input
 
       var name = document.createElement('span');
       name.textContent = s.title;
@@ -212,6 +237,26 @@
       });
       li.addEventListener('mouseenter', function () {
         highlight(i);
+      });
+      li.addEventListener('focus', function () {
+        highlight(i);
+      });
+      li.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          submit(s);
+        } else if (ev.key === 'ArrowDown') {
+          ev.preventDefault();
+          var next = li.nextElementSibling || el.suggestions.firstElementChild;
+          if (next) next.focus();
+        } else if (ev.key === 'ArrowUp') {
+          ev.preventDefault();
+          if (li.previousElementSibling) li.previousElementSibling.focus();
+          else el.input.focus();
+        } else if (ev.key === 'Escape') {
+          closeSuggestions();
+          el.input.focus();
+        }
       });
       el.suggestions.appendChild(li);
     });
@@ -240,8 +285,14 @@
     }
   });
 
-  el.input.addEventListener('blur', function () {
-    setTimeout(closeSuggestions, 120);
+  // Close only when focus leaves the combo entirely, so Tab can move from the
+  // input into the suggestion list without dismissing it.
+  var combo = el.input.parentNode;
+  combo.addEventListener('focusout', function (ev) {
+    if (ev.relatedTarget && combo.contains(ev.relatedTarget)) return;
+    setTimeout(function () {
+      if (!combo.contains(document.activeElement)) closeSuggestions();
+    }, 120);
   });
 
   /* ===== boot ===== */
@@ -268,6 +319,9 @@
       el.guessArea.hidden = false;
       render();
       if (state.status === 'playing') el.input.focus();
+
+      document.dispatchEvent(new CustomEvent('kanyeezle:ready', { detail: { day: day } }));
+      announceFinish(); // covers reloading a page whose round already ended
     })
     .catch(function (err) {
       el.loading.className = 'loading error';
