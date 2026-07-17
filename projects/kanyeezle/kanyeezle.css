@@ -102,9 +102,15 @@
 }
 
 .suggestions li[aria-selected="true"],
-.suggestions li:hover {
+.suggestions li:hover,
+.suggestions li:focus {
   background: var(--orange-soft);
   color: var(--orange-deep);
+}
+
+.suggestions li:focus {
+  outline: 2px solid var(--orange);
+  outline-offset: -2px;
 }
 
 .guesses-left {
@@ -223,6 +229,130 @@
 
 .share-note { min-height: 1.4em; margin-top: 10px; font-size: 0.85rem; font-weight: 600; color: var(--hit); }
 
+/* ===== Leaderboard & chat ===== */
+.social { margin-top: 36px; }
+
+.name-bar { margin-bottom: 16px; }
+
+#name-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+#name-form label {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+#name-form input,
+.chat-form input {
+  flex: 1;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--orange-soft);
+  border-radius: 999px;
+  padding: 9px 16px;
+}
+
+#name-form input:focus,
+.chat-form input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+#name-form button,
+.chat-form button {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--orange), var(--red));
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 20px;
+  cursor: pointer;
+}
+
+.chat-form input:disabled,
+.chat-form button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.name-current { font-size: 0.9rem; color: var(--ink-soft); }
+
+.name-current b { color: var(--ink); }
+
+.name-change {
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--orange-deep);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+@media (max-width: 700px) {
+  .social-grid { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+
+.panel h2 { font-size: 1rem; margin-bottom: 12px; }
+
+.lb { list-style: none; }
+
+.lb li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 2px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--orange-soft);
+}
+
+.lb li:last-child { border-bottom: 0; }
+
+.lb-rank { flex-shrink: 0; width: 1.6em; font-weight: 700; color: var(--ink-soft); }
+
+.lb-name { flex: 1; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+
+.lb-score { font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
+
+.panel-note { font-size: 0.85rem; color: var(--ink-soft); }
+
+.chat-log {
+  height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-right: 4px;
+}
+
+.chat-msg { font-size: 0.9rem; line-height: 1.35; overflow-wrap: anywhere; }
+
+.chat-msg b { color: var(--orange-deep); }
+
+.chat-time { margin-left: 6px; font-size: 0.72rem; color: var(--ink-soft); }
+
+.chat-text { display: block; }
+
+.chat-form { display: flex; gap: 8px; }
+
 /* ===== How to play ===== */
 .how {
   margin-top: 36px;
@@ -254,6 +384,18 @@
 .how-body li { margin-bottom: 6px; }
 
 .how-body b { color: var(--ink); }
+
+.how-note {
+  background: var(--orange-soft);
+  border-left: 4px solid var(--orange);
+  border-radius: 4px 10px 10px 4px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  color: var(--orange-deep);
+  font-weight: 500;
+}
+
+.how-body .how-note b { color: var(--orange-deep); }
 
 .how-foot { font-size: 0.82rem; }
 

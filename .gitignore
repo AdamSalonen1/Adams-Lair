@@ -1,2 +1,3 @@
-# MusicBrainz response cache — regenerated on demand by tools/build-songs.mjs
+# MusicBrainz response cache — only tools/archive/build-songs.mjs writes this
 tools/.cache/
+tools/archive/songs.generated.json

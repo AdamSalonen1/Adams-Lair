@@ -29,7 +29,7 @@
       <span class="kicker" id="puzzle-no">Daily puzzle</span>
       <h1>Kan<span class="gradient">Yeezle</span></h1>
       <p class="game-sub">
-        Guess the mystery Ye song in 8 tries. Every album from
+        Guess the mystery Kanye song in 8 tries. Every album from
         <em>The College Dropout</em> to <em>Donda</em> — back when he was still Kanye.
       </p>
     </header>
@@ -78,9 +78,43 @@
       <p class="share-note" id="share-note" aria-live="polite"></p>
     </section>
 
+    <section class="social" id="social" hidden>
+      <div class="name-bar">
+        <form id="name-form">
+          <label for="name-input">Pick a name for the leaderboard &amp; chat</label>
+          <input id="name-input" maxlength="20" placeholder="Your name" autocomplete="nickname">
+          <button type="submit">Save</button>
+        </form>
+        <p class="name-current" id="name-current" hidden>
+          Playing as <b id="name-display"></b>
+          <button type="button" class="name-change" id="name-change">change</button>
+        </p>
+      </div>
+
+      <div class="social-grid">
+        <div class="panel">
+          <h2>Today's leaderboard</h2>
+          <ol class="lb" id="lb-list"></ol>
+          <p class="panel-note" id="lb-note"></p>
+        </div>
+        <div class="panel">
+          <h2>Chat</h2>
+          <div class="chat-log" id="chat-log" aria-live="polite"></div>
+          <form class="chat-form" id="chat-form">
+            <input id="chat-input" maxlength="280" placeholder="Say something…" autocomplete="off">
+            <button type="submit" id="chat-send">Send</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
     <details class="how">
       <summary>How to play</summary>
       <div class="how-body">
+        <p class="how-note">
+          <b>Heads up:</b> <b>Cruel Summer</b> counts as an album in this version, and
+          every track on it is in play.
+        </p>
         <p>
           One song is chosen each day at local midnight — everyone gets the same one.
           Each guess is scored against the answer on four clues:
@@ -96,8 +130,12 @@
           a higher track number or a longer song, ↓ lower or shorter.
         </p>
         <p class="how-foot">
-          Songs, track numbers, lengths and credits come from
-          <a href="https://musicbrainz.org" rel="noopener">MusicBrainz</a>. Skits are excluded.
+          Track numbers and lengths come from
+          <a href="https://musicbrainz.org" rel="noopener">MusicBrainz</a>. Featured
+          artists are compiled and edited from
+          <a href="https://en.wikipedia.org/wiki/Kanye_West_discography" rel="noopener">Wikipedia</a>
+          (<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener">CC BY-SA 4.0</a>)
+          and include guests the official credits leave off. Skits are excluded.
         </p>
       </div>
     </details>
@@ -113,5 +151,7 @@
 
   <script src="logic.js"></script>
   <script src="game.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="social.js"></script>
 </body>
 </html>
