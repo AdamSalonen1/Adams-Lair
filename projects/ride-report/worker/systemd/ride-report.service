@@ -22,7 +22,12 @@ Environment=NODE_ENV=production
 # flock is shared with Phase 4's Realtime listener so scheduled and event-driven
 # runs never overlap. -n means "skip rather than queue": if a run is already in
 # flight, the forecast hasn't changed enough to be worth waiting for.
-ExecStart=/usr/bin/flock -n /run/lock/ride-report.lock /usr/bin/node run-scheduled.js
+#
+# -E 75 makes "couldn't get the lock" exit 75 (EX_TEMPFAIL) instead of flock's
+# default 1, so it's distinguishable from the pipeline's own exit 1. Paired with
+# SuccessExitStatus below, a skipped run stays green — otherwise every overlap
+# with the Phase 4 listener would show as failed and train us to ignore red.
+ExecStart=/usr/bin/flock -n -E 75 /run/lock/ride-report.lock /usr/bin/node run-scheduled.js
 
 # A cold Node start plus a Claude round trip is ~30-60s on a Pi. 10 min is slack
 # for a bad network day, and bounds a hung CLI.
@@ -37,7 +42,9 @@ StandardError=journal
 SyslogIdentifier=ride-report
 
 # Exit codes: 0 = Claude narrative written, 1 = nothing written,
-# 2 = fallback narrative written. 2 is intentionally NOT listed as success —
-# the row landed and the page stays useful, but a persistent Claude outage
-# should show up red in `systemctl status`, not hide behind a green check.
-SuccessExitStatus=0
+# 2 = fallback narrative written, 75 = skipped, another run held the lock.
+# 2 is intentionally NOT listed as success — the row landed and the page stays
+# useful, but a persistent Claude outage should show up red in
+# `systemctl status`, not hide behind a green check. 75 IS success: declining
+# to run because a run is already in flight is correct behaviour, not a fault.
+SuccessExitStatus=0 75
