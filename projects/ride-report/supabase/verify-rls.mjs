@@ -158,26 +158,41 @@ async function anonChecks(seeded) {
   if (!seeded) return;
 
   // Update and delete are only meaningful against a row that exists: PostgREST
-  // answers 204 for "matched nothing" and for "not allowed to match it" alike.
+  // answers the same way for "matched nothing" and "not allowed to match it".
+  //
+  // And both are checked by reading the row back, not by reading the response.
+  // A blocked write returns 200 with an empty body — but so does a write that
+  // was allowed and returned no representation, and so does a request that went
+  // somewhere unexpected. Only the stored row settles whether it changed.
+  const readBack = async () => {
+    const res = await rest(`reports?id=eq.${seeded.dailyReportId}&select=id,source`);
+    return Array.isArray(res.json) ? res.json[0] ?? null : null;
+  };
+
+  const before = await readBack();
+  if (!before) throw new Error('seeded daily report vanished before the write checks');
+
   const patch = await rest(`reports?id=eq.${seeded.dailyReportId}`, {
     method: 'PATCH',
     prefer: 'return=representation',
     body: { source: 'claude' },
   });
+  const afterPatch = await readBack();
   check(
     'anon cannot update an existing daily report',
-    !patch.ok || (Array.isArray(patch.json) && patch.json.length === 0),
-    `HTTP ${patch.status}`,
+    afterPatch?.source === before.source,
+    `HTTP ${patch.status}, source is still ${JSON.stringify(afterPatch?.source)}`,
   );
 
   const del = await rest(`reports?id=eq.${seeded.dailyReportId}`, {
     method: 'DELETE',
     prefer: 'return=representation',
   });
+  const afterDelete = await readBack();
   check(
     'anon cannot delete an existing daily report',
-    !del.ok || (Array.isArray(del.json) && del.json.length === 0),
-    `HTTP ${del.status}`,
+    Boolean(afterDelete),
+    `HTTP ${del.status}, ${afterDelete ? 'row still present' : 'ROW IS GONE'}`,
   );
 }
 
