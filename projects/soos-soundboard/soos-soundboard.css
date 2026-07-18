@@ -1,0 +1,125 @@
+/* ===== Soos Soundboard — page + pad styles ===== */
+
+.soos-main {
+  padding-bottom: 72px;
+}
+
+/* --- Header --- */
+.soos-head {
+  text-align: center;
+  padding: 44px 24px 6px;
+}
+
+.soos-head h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.02em;
+  margin: 14px 0 10px;
+}
+
+.soos-sub {
+  color: var(--ink-soft);
+  max-width: 56ch;
+  margin: 0 auto;
+}
+
+/* --- Board --- */
+.soos-board {
+  max-width: 760px;
+  margin: 30px auto 0;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px 18px;
+}
+
+/* --- Pad --- */
+.soos-pad {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.soos-pad img {
+  width: 100%;
+  max-width: 150px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--orange-soft);
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, filter 0.15s, border-color 0.15s;
+}
+
+.soos-pad:hover img {
+  transform: translateY(-4px) scale(1.03);
+  filter: brightness(1.04);
+  border-color: var(--orange);
+}
+
+.soos-pad:active img {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.soos-pad:focus-visible {
+  outline: none;
+}
+
+.soos-pad:focus-visible img {
+  border-color: var(--red);
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.25), var(--shadow);
+}
+
+/* --- Label pill --- */
+.soos-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.25;
+  color: var(--orange-deep);
+  background: var(--orange-soft);
+  border-radius: 999px;
+  padding: 7px 14px;
+  min-height: 2.5em;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+/* --- Playing state --- */
+.soos-pad.is-playing img {
+  border-color: var(--orange);
+  animation: soos-pulse 1s ease-out infinite;
+}
+
+.soos-pad.is-playing .soos-label {
+  color: #fff;
+  background: linear-gradient(135deg, var(--orange), var(--red));
+}
+
+@keyframes soos-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.5), var(--shadow); }
+  70%  { box-shadow: 0 0 0 14px rgba(249, 115, 22, 0), var(--shadow); }
+  100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0), var(--shadow); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soos-pad img,
+  .soos-pad:hover img,
+  .soos-pad.is-playing img { transition: none; animation: none; }
+}
+
+/* --- Responsive --- */
+@media (max-width: 680px) {
+  .soos-board { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 460px) {
+  .soos-board { grid-template-columns: repeat(2, 1fr); gap: 22px 14px; }
+}

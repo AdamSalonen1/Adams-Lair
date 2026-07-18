@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soos Soundboard — Adam's Lair</title>
+  <meta name="description" content="A Gravity Falls Soos Ramirez soundboard — tap a face, hear the Soos. One of the very first sites Adam ever built, brought into the Lair.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="soos-soundboard.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔊</text></svg>">
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="wrap">
+      <a class="brand" href="../../index.html">Adam's <span class="flame">Lair</span></a>
+      <ul>
+        <li><a href="../../index.html">Home</a></li>
+        <li><a href="../../about.html">About</a></li>
+        <li><a href="../../projects.html" class="active">Projects</a></li>
+        <li><a href="../../contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="soos-main">
+
+    <header class="soos-head">
+      <span class="kicker">The OG website</span>
+      <h1>Soos <span class="gradient">Soundboard</span></h1>
+      <p class="soos-sub">
+        Your home for all sounds Soos Ramirez related. Tap a face to hear the
+        big lug in action — this was one of the very first sites I ever built,
+        dusted off and dragged into the Lair.
+      </p>
+    </header>
+
+    <section class="soos-board" aria-label="Soos soundboard">
+      <button class="soos-pad" type="button" data-sound="ateAManAlive.mp3" aria-label="Play: I Ate a Man Alive Today">
+        <img src="images/confused.webp" alt="" width="140" height="140">
+        <span class="soos-label">I Ate a Man Alive Today</span>
+      </button>
+
+      <button class="soos-pad" type="button" data-sound="boopSwag.mp3" aria-label="Play: Boop-a-doop-boop-boop... SWAG!">
+        <img src="images/default.jpg" alt="" width="140" height="140">
+        <span class="soos-label">Boop-a-doop-boop-boop… SWAG!</span>
+      </button>
+
+      <button class="soos-pad" type="button" data-sound="questionyTheQuestionMark.mp3" aria-label="Play: Questiony the Question Mark">
+        <img src="images/questiony.jpg" alt="" width="140" height="140">
+        <span class="soos-label">Questiony the Question Mark</span>
+      </button>
+
+      <button class="soos-pad" type="button" data-sound="yueah2.mp3" aria-label="Play: YEASSS">
+        <img src="images/withmcgucket.jpg" alt="" width="140" height="140">
+        <span class="soos-label">YEASSS</span>
+      </button>
+
+      <button class="soos-pad" type="button" data-sound="faceGoodImSoos.mp3" aria-label="Play: Your Face is Good, I'm a Soos">
+        <img src="images/happy.webp" alt="" width="140" height="140">
+        <span class="soos-label">Your Face is Good. I'm a Soos</span>
+      </button>
+
+      <button class="soos-pad" type="button" data-sound="iLikeIt.mp3" aria-label="Play: I Like It!">
+        <img src="images/hand.webp" alt="" width="140" height="140">
+        <span class="soos-label">I Like It!</span>
+      </button>
+
+      <button class="soos-pad" type="button" data-sound="ruckus.mp3" aria-label="Play: Ruckus">
+        <img src="images/stanhat.jpg" alt="" width="140" height="140">
+        <span class="soos-label">Ruckus</span>
+      </button>
+
+      <button class="soos-pad" type="button" data-sound="hglegh.mp3" aria-label="Play: Hglegh">
+        <img src="images/youngsoos.webp" alt="" width="140" height="140">
+        <span class="soos-label">Hglegh</span>
+      </button>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Adam Salonen · Adam's Lair</span>
+      <span>Built with an unreasonable amount of orange 🧡</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      let current = null;
+
+      function stopCurrent() {
+        if (!current) return;
+        current.audio.pause();
+        current.audio.currentTime = 0;
+        current.btn.classList.remove('is-playing');
+        current = null;
+      }
+
+      document.querySelectorAll('.soos-pad').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const wasCurrent = current && current.btn === btn;
+          stopCurrent();
+          // A second click on the playing pad just stops it.
+          if (wasCurrent) return;
+
+          const audio = new Audio('sounds/' + btn.dataset.sound);
+          current = { audio: audio, btn: btn };
+          btn.classList.add('is-playing');
+
+          audio.addEventListener('ended', function () {
+            if (current && current.audio === audio) stopCurrent();
+          });
+          audio.play().catch(function () {
+            // Autoplay/permission hiccup — clear the playing state.
+            if (current && current.audio === audio) stopCurrent();
+          });
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>
