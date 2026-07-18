@@ -52,6 +52,7 @@ automatically as forecasts firm up.
 | Supabase Realtime for trip events (not webhooks, not 1s polling) | Webhooks would require the Pi to accept inbound traffic. Realtime is an outbound WebSocket the Pi holds open — push semantics, Pi stays private. |
 | Worker in Node | Claude Code already requires Node on the Pi, and supabase-js has the first-class Realtime client. Zero extra runtime. |
 | Script does all I/O; Claude only transforms text | Deterministic fetch/upload via code; the LLM gets JSON in, returns JSON out. No agent-loop nondeterminism in the pipeline. |
+| Multi-tenant-shaped schema from day one (`trips.user_id` + `auth.uid()` RLS; trip reports owner-only) | Closes the "visitors can see when you're away" leak now; friends-scale multi-user later is a signup toggle, not a migration. Genuinely public multi-user stays out of scope while synthesis rides the Pro subscription. |
 
 ## Phases
 

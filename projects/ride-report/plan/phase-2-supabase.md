@@ -18,6 +18,8 @@ page can *read* synthesized reports (manually inserted for now) and Adam can
 ```sql
 create table trips (
   id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users (id)
+                  on delete cascade default auth.uid(),
   title         text not null,
   location_name text not null default 'Fargo, ND',
   lat           double precision not null default 46.8772,
@@ -56,24 +58,57 @@ create index reports_by_trip on reports (trip_id, generated_at desc);
 
 Trip reports use the same envelope plus per-day entries for multi-day trips.
 
-## RLS
+## RLS (multi-tenant-shaped, single user today)
 
-- `reports`: **anon SELECT** (public read). Writes only via service role
-  (bypasses RLS) — no anon/authed insert policy at all.
-- `trips`: anon SELECT, **authenticated** INSERT/UPDATE/DELETE.
-  - ⚠️ Decision to confirm: public trip reads mean visitors can see when
-    you're away from home. If that's uncomfortable, restrict trips SELECT to
-    authenticated and have the page hide the trips section when logged out.
-    Default in this plan: public read (it's a personal site; your call).
+**Settled design (2026-07-17):** trips are owner-scoped and reports split by
+kind. This closes the "visitors can see when you're away" leak now, and makes
+friends-scale multi-user a signup toggle later instead of a migration.
+
+- `trips`: owner-only, all operations. No anon policy at all — logged-out
+  visitors get empty rows, not errors.
+
+  ```sql
+  create policy "own trips" on trips for all
+    using (user_id = auth.uid()) with check (user_id = auth.uid());
+  ```
+
+- `reports`: daily reports public; **trip reports visible only to the trip's
+  owner**. This split is load-bearing — trip narratives carry the same
+  dates/locations that hiding `trips` protects, so a blanket public read on
+  `reports` would leak everything through the back door.
+
+  ```sql
+  create policy "read reports" on reports for select
+    using (
+      kind = 'daily'
+      or exists (
+        select 1 from trips t
+        where t.id = reports.trip_id and t.user_id = auth.uid()
+      )
+    );
+  ```
+
+  Writes only via service role (bypasses RLS) — no insert/update policies
+  for anon or authenticated at all.
 - `updated_at` maintained by a trigger (`moddatetime` extension or a 3-line
   trigger function).
 
-## Auth (single user)
+## Auth (multi-tenant shape, one tenant)
 
-- Supabase email magic-link auth; disable signups after creating the one
-  account (Dashboard → Auth → disable new user signups).
+- Supabase email magic-link auth. Create Adam's account, then disable new
+  signups (Dashboard → Auth → disable new user signups).
+- supabase-js manages per-browser sessions (JWT + refresh) automatically —
+  there is nothing to build for "different users have different sessions";
+  that's just how it works.
+- `trips.user_id` defaults to `auth.uid()`, so page insert code never sets
+  ownership explicitly.
 - Page gets a small, unobtrusive login (footer link → email field). Session
   persists via supabase-js; logged-in state reveals the trip add/edit UI.
+- **Friends-scale later** = re-enable signups; schema and policies already
+  hold. Deliberately out of scope until then: per-user home locations (the
+  daily report is Adam's), and note that synthesizing other users' trips
+  draws on Adam's Pro usage window — a genuinely public multi-user version
+  moves synthesis to an API key first (see Phase 3 notes).
 
 ## Realtime (prep for Phase 4, do it now)
 
@@ -91,16 +126,20 @@ alter publication supabase_realtime add table trips;
   - 4–24 h old → render with a visible "report from {time}" staleness badge
   - missing/older → client-side Phase 1 score only (which renders regardless —
     the narrative is an enhancement layer, never the page's spine)
-- Trips section: list upcoming trips (+ their reports when they exist);
-  add/edit/delete behind auth.
+- Trips section renders only when a session exists. RLS is the enforcement
+  (anon queries return empty rows regardless); hiding the section is just
+  tidiness, not security.
 
 ## Exit criteria
 
 - [ ] `schema.sql` applies cleanly to a fresh project
-- [ ] A hand-inserted `reports` row renders on the page with correct staleness
+- [ ] A hand-inserted daily `reports` row renders on the page with correct
+      staleness
 - [ ] Trip CRUD works from the page (phone included) when logged in
-- [ ] Logged out: writes fail (verify RLS actually blocks, don't trust the UI)
-- [ ] Anon key in page source grants nothing beyond intended SELECTs
+- [ ] Anon (curl with the anon key, not just the UI): zero `trips` rows, zero
+      `kind='trip'` reports, daily reports readable, trip writes rejected
+- [ ] Logged in: own trips and their reports visible; the trips section
+      appears only with a session
 
 ## Notes
 
