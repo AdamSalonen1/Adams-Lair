@@ -49,6 +49,8 @@
           <p class="verdict" id="verdict"></p>
           <p class="limiting-line" id="limiting-line"></p>
           <p class="window-callout" id="window-callout"></p>
+          <p class="narrative" id="narrative" hidden></p>
+          <p class="report-stamp" id="report-stamp" hidden></p>
         </div>
       </div>
 
@@ -66,12 +68,94 @@
 
     </section>
 
+    <!-- Revealed only when a session exists. RLS is what actually protects the
+         rows; hiding the section is tidiness, not security. -->
+    <section class="trips" id="trips" hidden>
+
+      <div class="trips-head">
+        <h2>Trips</h2>
+        <button type="button" class="btn btn-primary btn-sm" id="trip-add">Add a trip</button>
+      </div>
+
+      <form class="trip-form" id="trip-form" hidden>
+        <label>Title
+          <input type="text" id="trip-title" maxlength="120" required
+                 placeholder="Black Hills weekend">
+        </label>
+
+        <label>Location
+          <input type="text" id="trip-location" maxlength="120" required
+                 placeholder="Rapid City, SD">
+        </label>
+
+        <div class="field-row">
+          <label>Start
+            <input type="date" id="trip-start" required>
+          </label>
+          <label>End
+            <input type="date" id="trip-end" required>
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label>Latitude
+            <input type="number" id="trip-lat" step="any" min="-90" max="90"
+                   inputmode="decimal" required>
+          </label>
+          <label>Longitude
+            <input type="number" id="trip-lon" step="any" min="-180" max="180"
+                   inputmode="decimal" required>
+          </label>
+        </div>
+
+        <label>Notes
+          <textarea id="trip-notes" rows="2" maxlength="500"
+                    placeholder="Gravel bike, packing for wind"></textarea>
+        </label>
+
+        <p class="form-error" id="trip-error" hidden role="alert"></p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="trip-save">Save trip</button>
+          <button type="button" class="btn" id="trip-cancel">Cancel</button>
+          <button type="button" class="btn btn-danger" id="trip-delete" hidden>Delete</button>
+        </div>
+      </form>
+
+      <p class="trips-empty" id="trips-empty" hidden>
+        No trips yet. Add one and the Pi will start forecasting it.
+      </p>
+
+      <ul class="trip-list" id="trip-list"></ul>
+
+    </section>
+
   </main>
 
   <footer class="site-footer">
     <div class="wrap">
       <span>© 2026 Adam Salonen · Adam's Lair</span>
       <span>Built with an unreasonable amount of orange 🧡</span>
+    </div>
+
+    <!-- Stays hidden until we know Supabase is reachable, so an unconfigured
+         page never shows a login that cannot work. -->
+    <div class="wrap auth-bar" id="auth-bar" hidden>
+      <button type="button" class="auth-link" id="auth-open">Log in</button>
+
+      <form class="auth-form" id="auth-form" hidden>
+        <input type="email" id="auth-email" required autocomplete="email"
+               placeholder="you@example.com" aria-label="Email address">
+        <button type="submit" class="btn btn-primary btn-sm" id="auth-send">Send link</button>
+        <button type="button" class="auth-link" id="auth-cancel">Cancel</button>
+      </form>
+
+      <div class="auth-session" id="auth-session" hidden>
+        <span id="auth-who"></span>
+        <button type="button" class="auth-link" id="auth-signout">Log out</button>
+      </div>
+
+      <p class="auth-msg" id="auth-msg" hidden role="status"></p>
     </div>
   </footer>
 

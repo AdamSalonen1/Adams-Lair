@@ -7,6 +7,13 @@
   --score-na: #a8a29e;
 }
 
+/* `hidden` is only `display: none` in the browser's own stylesheet, which any
+   class carrying an explicit `display` outranks. Half the blocks on this page
+   are flex or grid AND toggled by `hidden` from JS, so restate the rule with
+   enough weight to actually win. Without this the trip form and the sign-in
+   form render permanently open. */
+[hidden] { display: none !important; }
+
 .ride-main {
   max-width: 720px;
   padding: 40px 24px 88px;
@@ -91,6 +98,30 @@
   margin-top: 10px;
   font-weight: 700;
   color: var(--orange-deep);
+}
+
+/* ===== Narrative (the Pi's prose, layered over the score) ===== */
+.narrative {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--orange-soft);
+  color: var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+  /* The card centres its short lines on narrow screens; a paragraph of prose
+     is not a short line. */
+  text-align: left;
+}
+
+.report-stamp {
+  text-align: left;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
 /* ===== Hourly strip ===== */
@@ -180,6 +211,260 @@
 
 .outlook-verdict { color: var(--ink-soft); font-size: 0.9rem; }
 
+/* ===== Buttons ===== */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: 999px;
+  padding: 11px 20px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+}
+
+.btn:hover { border-color: var(--orange); color: var(--orange-deep); }
+.btn:active { transform: translateY(1px); }
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--orange-deep);
+  border-color: var(--orange-deep);
+}
+
+.btn-primary:hover { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+.btn-danger { color: var(--red-deep); }
+.btn-danger:hover { border-color: var(--red); color: var(--red-deep); background: #fff5f5; }
+
+.btn-sm {
+  padding: 7px 15px;
+  min-height: 38px;
+  font-size: 0.88rem;
+}
+
+/* ===== Trips ===== */
+.trips {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--orange-soft);
+}
+
+.trips-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.trips-head h2 {
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.trips-empty {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  padding: 8px 0 4px;
+}
+
+/* ===== Trip form ===== */
+.trip-form {
+  display: grid;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-top: 4px solid var(--orange);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.trip-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.trip-form input,
+.trip-form textarea {
+  font-family: inherit;
+  /* 16px minimum: anything smaller makes iOS Safari zoom the page on focus. */
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--orange-soft);
+  border-radius: 10px;
+  padding: 11px 13px;
+  min-height: 44px;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.trip-form textarea { resize: vertical; line-height: 1.5; }
+
+.trip-form input:focus,
+.trip-form textarea:focus,
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-error {
+  color: var(--red-deep);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+/* Pushed to the far end so it is never the button you hit by accident. */
+.form-actions .btn-danger { margin-left: auto; }
+
+/* ===== Trip cards ===== */
+.trip-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.trip-card {
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-left: 4px solid var(--orange);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.trip-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trip-card-head h3 {
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.trip-meta {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  margin-top: 2px;
+}
+
+.trip-notes {
+  margin-top: 8px;
+  font-size: 0.92rem;
+}
+
+.trip-outlook {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--orange-soft);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.trip-outlook.is-pending {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.trip-stamp {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* ===== Footer sign-in ===== */
+.site-footer .auth-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 0;
+  padding-bottom: 24px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.auth-link {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+
+.auth-link:hover { color: var(--orange-deep); }
+
+.auth-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-form input {
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: 999px;
+  padding: 9px 16px;
+  min-height: 40px;
+  min-width: 220px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-session {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-msg { width: 100%; text-align: center; }
+.auth-msg.is-error { color: var(--red-deep); font-weight: 600; }
+
 /* ===== Responsive ===== */
 @media (min-width: 480px) {
   .score-card { flex-direction: row; text-align: left; }
@@ -188,4 +473,9 @@
 
 @media (min-width: 640px) {
   .hour-block { flex-basis: 24px; }
+}
+
+@media (max-width: 420px) {
+  /* Two date pickers side by side stop being tappable below this. */
+  .field-row { grid-template-columns: 1fr; }
 }

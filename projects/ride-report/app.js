@@ -1,12 +1,21 @@
 // Ride Report — glue: fetch weather, score it, render the page.
 import { fetchWeather } from './weather.js';
 import { scoreReport } from './score.js';
+import { isConfigured, fetchLatestDailyReport } from './supabase.js';
+import { initTripsUi } from './trips.js';
 
 const LOCATION = {
   latitude: 46.8772,
   longitude: -96.7898,
   timezone: 'America/Chicago',
 };
+
+// How old a synthesized report can be before it stops being presented as
+// current, and before it stops being shown at all. Between the two it renders
+// with a visible timestamp, because a six-hour-old narrative is still worth
+// reading as long as nobody is misled about when it was written.
+const NARRATIVE_FRESH_MS = 4 * 60 * 60 * 1000;
+const NARRATIVE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const LIMITING_LABELS = {
   temp: 'temperature',
@@ -163,6 +172,51 @@ function renderOutlook(days, todayDateStr) {
   }
 }
 
+/** "5:10 AM", or "Fri 8:10 PM" once the report is from a different day. */
+function stampTime(date, sameDay) {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: LOCATION.timezone,
+    ...(sameDay ? {} : { weekday: 'short' }),
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+}
+
+/**
+ * Layer the Pi's narrative onto an already-rendered page.
+ *
+ * Everything here is additive and failure-tolerant by design: the score, the
+ * strip and the outlook are computed in the browser and have already rendered
+ * by the time this runs. A missing, stale, or unreachable report costs the
+ * reader some prose, never the forecast.
+ *
+ * `payload.headline` is deliberately left unrendered. It is the model's take on
+ * a score computed on the Pi up to three hours ago, while the dial shows the
+ * score computed here, now — so on a swinging day the two can land in different
+ * verdict buckets and read as a contradiction. The prose is the part worth
+ * having; the verdict line stays tied to the number beside it.
+ */
+function renderNarrative(row) {
+  const summary = row?.payload?.summary;
+  if (!summary) return;
+
+  const generatedAt = new Date(row.generated_at);
+  const ageMs = Date.now() - generatedAt.getTime();
+  if (Number.isNaN(ageMs) || ageMs > NARRATIVE_MAX_AGE_MS) return;
+
+  const narrativeEl = document.getElementById('narrative');
+  narrativeEl.textContent = summary;
+  narrativeEl.hidden = false;
+
+  // A clock-skewed "3 minutes in the future" report is fresh, not broken.
+  if (ageMs <= NARRATIVE_FRESH_MS) return;
+
+  const zoneDay = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: LOCATION.timezone }).format(d);
+  const stampEl = document.getElementById('report-stamp');
+  stampEl.textContent = `Report from ${stampTime(generatedAt, zoneDay(generatedAt) === zoneDay(new Date()))}`;
+  stampEl.hidden = false;
+}
+
 function render(report, todayDateStr) {
   const today = report.days.find((d) => d.date === todayDateStr)
     || report.days.find((d) => d.date > todayDateStr);
@@ -203,15 +257,36 @@ function render(report, todayDateStr) {
 
 async function init() {
   showLoading();
+
+  // Started alongside the weather fetch rather than after it. The narrative is
+  // layered on once the spine has rendered, but there is no reason to make the
+  // request queue behind Open-Meteo.
+  const reportPromise = isConfigured()
+    ? fetchLatestDailyReport().catch((err) => {
+      console.warn('Ride Report: could not load the synthesized report.', err);
+      return null;
+    })
+    : Promise.resolve(null);
+
+  let rendered = false;
   try {
     const { hours, daily } = await fetchWeather(LOCATION);
     const nowStr = nowStrInZone(LOCATION.timezone);
     const report = scoreReport(hours, daily, { nowStr });
     render(report, nowStr.slice(0, 10));
+    rendered = true;
   } catch (err) {
     console.error('Ride Report failed to load:', err);
     showError();
   }
+
+  // Before the await, not after: the trips UI has nothing to do with the daily
+  // report, and gating it on that request would leave the sign-in link missing
+  // for the full REST timeout whenever Supabase is slow.
+  initTripsUi();
+
+  const reportRow = await reportPromise;
+  if (rendered) renderNarrative(reportRow);
 }
 
 document.addEventListener('DOMContentLoaded', init);
