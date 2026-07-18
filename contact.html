@@ -21,13 +21,32 @@
     </div>
   </nav>
 
-  <section class="stub">
-    <div>
-      <span class="kicker">Under construction</span>
-      <h1>Contact</h1>
-      <p>A proper contact page is on the way. Until then, you probably know where to find me.</p>
+  <main class="wrap projects-main">
+    <span class="kicker">Get in touch</span>
+    <h1 class="projects-title">Contact</h1>
+    <p class="section-sub">Hit me up and I can make you a website that looks at least as good as this one!</p>
+
+    <div class="cards">
+      <button type="button" class="card project-card" id="copy-email">
+        <div class="emoji">✉️</div>
+        <h3>Email</h3>
+        <p>adam.salonen@gmail.com</p>
+        <span class="card-cta">Click to copy</span>
+      </button>
+      <a class="card project-card" href="https://www.linkedin.com/in/adam-salonen1/" target="_blank" rel="noopener">
+        <div class="emoji">💼</div>
+        <h3>LinkedIn</h3>
+        <p>Let's connect.</p>
+        <span class="card-cta">View profile →</span>
+      </a>
+      <a class="card project-card" href="https://github.com/AdamSalonen1" target="_blank" rel="noopener">
+        <div class="emoji">💻</div>
+        <h3>GitHub</h3>
+        <p>See what I've been building.</p>
+        <span class="card-cta">View profile →</span>
+      </a>
     </div>
-  </section>
+  </main>
 
   <footer class="site-footer">
     <div class="wrap">
@@ -35,6 +54,33 @@
       <span>Built with an unreasonable amount of orange 🧡</span>
     </div>
   </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Copied to clipboard!</div>
+
+  <script>
+    const copyEmailBtn = document.getElementById('copy-email');
+    const toast = document.getElementById('toast');
+    let toastTimer;
+
+    copyEmailBtn.addEventListener('click', async () => {
+      const email = 'adam.salonen@gmail.com';
+      try {
+        await navigator.clipboard.writeText(email);
+      } catch (err) {
+        const textarea = document.createElement('textarea');
+        textarea.value = email;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    });
+  </script>
 
 </body>
 </html>
