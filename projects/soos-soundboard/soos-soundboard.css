@@ -27,14 +27,15 @@
   max-width: 900px;
   margin: 30px auto 0;
   padding: 0 24px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 26px 16px;
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  gap: 26px 16px;
 }
 
 /* --- Pad --- */
 .soos-pad {
+  flex: 0 0 140px;
   font: inherit;
   cursor: pointer;
   border: none;
@@ -129,6 +130,9 @@
   .soos-board {
     padding: 0 14px;
     gap: 20px 12px;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .soos-pad {
+    flex-basis: 120px;
   }
 }

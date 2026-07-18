@@ -32,7 +32,8 @@
         Your home for all sounds Soos Ramirez related. Tap a face to hear the
         big lug in action. This was one of the very first sites I ever built —
         dusted off, dragged into the Lair, and loaded up with the whole clip
-        library. Click a playing pad again to stop it.
+        library. Mash as many pads as you want — everything plays over
+        everything else.
       </p>
     </header>
 
@@ -88,30 +89,28 @@
     ];
 
     const board = document.getElementById('board');
-    let current = null;
 
-    function stopCurrent() {
-      if (!current) return;
-      current.audio.pause();
-      current.audio.currentTime = 0;
-      current.btn.classList.remove('is-playing');
-      current = null;
+    // Every click gets its own Audio, so clips layer over each other — both
+    // across pads and on the same pad clicked repeatedly. Each pad counts its
+    // own live clips so the playing state only clears once they've all ended.
+    const liveCount = new WeakMap();
+
+    function clipStarted(btn) {
+      liveCount.set(btn, (liveCount.get(btn) || 0) + 1);
+      btn.classList.add('is-playing');
+    }
+
+    function clipEnded(btn) {
+      const left = (liveCount.get(btn) || 1) - 1;
+      liveCount.set(btn, Math.max(left, 0));
+      if (left <= 0) btn.classList.remove('is-playing');
     }
 
     function play(btn) {
-      const wasCurrent = current && current.btn === btn;
-      stopCurrent();
-      if (wasCurrent) return; // second click on the playing pad just stops it
-
       const audio = new Audio('sounds/' + btn.dataset.sound);
-      current = { audio: audio, btn: btn };
-      btn.classList.add('is-playing');
-      audio.addEventListener('ended', function () {
-        if (current && current.audio === audio) stopCurrent();
-      });
-      audio.play().catch(function () {
-        if (current && current.audio === audio) stopCurrent();
-      });
+      clipStarted(btn);
+      audio.addEventListener('ended', function () { clipEnded(btn); });
+      audio.play().catch(function () { clipEnded(btn); });
     }
 
     PADS.forEach(function (p) {
