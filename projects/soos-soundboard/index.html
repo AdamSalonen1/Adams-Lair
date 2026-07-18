@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Soos Soundboard — Adam's Lair</title>
-  <meta name="description" content="A Gravity Falls Soos Ramirez soundboard — tap a face, hear the Soos. One of the very first sites Adam ever built, brought into the Lair.">
+  <meta name="description" content="A Gravity Falls Soos Ramirez soundboard — tap a face, hear the Soos. One of the very first sites Adam ever built, brought into the Lair and loaded up with every clip.">
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="stylesheet" href="soos-soundboard.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔊</text></svg>">
@@ -30,52 +30,13 @@
       <h1>Soos <span class="gradient">Soundboard</span></h1>
       <p class="soos-sub">
         Your home for all sounds Soos Ramirez related. Tap a face to hear the
-        big lug in action — this was one of the very first sites I ever built,
-        dusted off and dragged into the Lair.
+        big lug in action. This was one of the very first sites I ever built —
+        dusted off, dragged into the Lair, and loaded up with the whole clip
+        library. Click a playing pad again to stop it.
       </p>
     </header>
 
-    <section class="soos-board" aria-label="Soos soundboard">
-      <button class="soos-pad" type="button" data-sound="ateAManAlive.mp3" aria-label="Play: I Ate a Man Alive Today">
-        <img src="images/confused.webp" alt="" width="140" height="140">
-        <span class="soos-label">I Ate a Man Alive Today</span>
-      </button>
-
-      <button class="soos-pad" type="button" data-sound="boopSwag.mp3" aria-label="Play: Boop-a-doop-boop-boop... SWAG!">
-        <img src="images/default.jpg" alt="" width="140" height="140">
-        <span class="soos-label">Boop-a-doop-boop-boop… SWAG!</span>
-      </button>
-
-      <button class="soos-pad" type="button" data-sound="questionyTheQuestionMark.mp3" aria-label="Play: Questiony the Question Mark">
-        <img src="images/questiony.jpg" alt="" width="140" height="140">
-        <span class="soos-label">Questiony the Question Mark</span>
-      </button>
-
-      <button class="soos-pad" type="button" data-sound="yueah2.mp3" aria-label="Play: YEASSS">
-        <img src="images/withmcgucket.jpg" alt="" width="140" height="140">
-        <span class="soos-label">YEASSS</span>
-      </button>
-
-      <button class="soos-pad" type="button" data-sound="faceGoodImSoos.mp3" aria-label="Play: Your Face is Good, I'm a Soos">
-        <img src="images/happy.webp" alt="" width="140" height="140">
-        <span class="soos-label">Your Face is Good. I'm a Soos</span>
-      </button>
-
-      <button class="soos-pad" type="button" data-sound="iLikeIt.mp3" aria-label="Play: I Like It!">
-        <img src="images/hand.webp" alt="" width="140" height="140">
-        <span class="soos-label">I Like It!</span>
-      </button>
-
-      <button class="soos-pad" type="button" data-sound="ruckus.mp3" aria-label="Play: Ruckus">
-        <img src="images/stanhat.jpg" alt="" width="140" height="140">
-        <span class="soos-label">Ruckus</span>
-      </button>
-
-      <button class="soos-pad" type="button" data-sound="hglegh.mp3" aria-label="Play: Hglegh">
-        <img src="images/youngsoos.webp" alt="" width="140" height="140">
-        <span class="soos-label">Hglegh</span>
-      </button>
-    </section>
+    <section class="soos-board" id="board" aria-label="Soos soundboard"></section>
 
   </main>
 
@@ -87,38 +48,96 @@
   </footer>
 
   <script>
-    (function () {
-      let current = null;
+    // One source of truth for every pad: sound file, image, optional framing
+    // class (to keep Soos in view when the still is wider than the circle),
+    // and the label. The first eight are the original board, kept as-is.
+    const PADS = [
+      { s: 'ateAManAlive.mp3',            i: 'confused.webp',   p: '',          l: 'I Ate a Man Alive Today' },
+      { s: 'boopSwag.mp3',                i: 'default.jpg',     p: '',          l: 'Boop-a-doop-boop-boop… SWAG!' },
+      { s: 'questionyTheQuestionMark.mp3',i: 'questiony.jpg',   p: '',          l: 'Questiony the Question Mark' },
+      { s: 'yueah2.mp3',                  i: 'withmcgucket.jpg',p: '',          l: 'YEASSS' },
+      { s: 'faceGoodImSoos.mp3',          i: 'happy.webp',      p: '',          l: "Your Face is Good. I'm a Soos" },
+      { s: 'iLikeIt.mp3',                 i: 'hand.webp',       p: '',          l: 'I Like It!' },
+      { s: 'ruckus.mp3',                  i: 'stanhat.jpg',     p: '',          l: 'Ruckus' },
+      { s: 'hglegh.mp3',                  i: 'youngsoos.webp',  p: '',          l: 'Hglegh' },
 
-      function stopCurrent() {
-        if (!current) return;
-        current.audio.pause();
-        current.audio.currentTime = 0;
-        current.btn.classList.remove('is-playing');
-        current = null;
-      }
+      { s: 'victoryNachos.mp3',           i: 'sidekick.webp',   p: 'pos-right', l: 'Victory Nachos!' },
+      { s: 'infinitePizza.mp3',           i: 'sitting.webp',    p: 'pos-right', l: 'Infinite Pizza' },
+      { s: 'monch.mp3',                   i: 'chocolate.webp',  p: '',          l: 'Monch' },
+      { s: 'cornChip.mp3',                i: 'chip.webp',       p: '',          l: 'Corn Chip' },
+      { s: 'stanJr.mp3',                  i: 'fez.webp',        p: 'pos-left',  l: 'Stan Jr.' },
+      { s: 'imNotSoos.mp3',               i: 'nocap.webp',      p: 'pos-left',  l: "I'm Not Soos" },
+      { s: 'differentBodyType.mp3',       i: 'hat.webp',        p: '',          l: "I've Got a Different Body Type" },
+      { s: 'mantrappedinapigsbody.mp3',   i: 'enters.webp',     p: '',          l: "A Man Trapped in a Pig's Body" },
+      { s: 'infiniteHorizon.mp3',         i: 'wondering.webp',  p: '',          l: 'The Infinite Horizon' },
+      { s: 'wisdomCurse.mp3',             i: 'lightbulb.webp',  p: 'pos-left',  l: 'The Curse of Wisdom' },
+      { s: 'theYear2000.mp3',             i: 'arcade.webp',     p: 'pos-left',  l: 'The Year 2000' },
+      { s: 'havingAMoment.mp3',           i: 'braly.webp',      p: '',          l: "We're Havin' a Moment Here" },
+      { s: 'wholesomeLaugh.mp3',          i: 'realgirl.webp',   p: 'pos-top',   l: 'Wholesome Laugh' },
+      { s: 'freakingMeOutDude.mp3',       i: 'bat.webp',        p: 'pos-left',  l: "You're Freakin' Me Out, Dude" },
+      { s: 'hesDeadNow.mp3',              i: 'cantwatch.webp',  p: 'pos-left',  l: "He's Dead Now" },
+      { s: 'soOnItDude.mp3',              i: 'sidekick.webp',   p: 'pos-right', l: "I'm So On It, Dude" },
+      { s: 'yuuass.mp3',                  i: 'baby.webp',       p: '',          l: 'Yuuass' },
+      { s: 'owwaitwait.mp3',              i: 'close.webp',      p: '',          l: 'Ow — Wait, Wait' },
+      { s: 'oneInMouth.mp3',              i: 'chocolate.webp',  p: '',          l: 'One in the Mouth' },
+      { s: 'buttIsland.mp3',              i: 'wondering.webp',  p: '',          l: 'Butt Island' },
+      { s: 'sorryDude.mp3',               i: 'hat.webp',        p: '',          l: 'Sorry, Dude' },
+      { s: 'uhhhhhehhh.mp3',              i: 'nocap.webp',      p: 'pos-left',  l: 'Uhhhhhehhh' },
+      { s: 'huhu.mp3',                    i: 'realgirl.webp',   p: 'pos-top',   l: 'Huhu' },
+      { s: 'chokingIdk.mp3',              i: 'cantwatch.webp',  p: 'pos-left',  l: '*choking*' },
+    ];
 
-      document.querySelectorAll('.soos-pad').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          const wasCurrent = current && current.btn === btn;
-          stopCurrent();
-          // A second click on the playing pad just stops it.
-          if (wasCurrent) return;
+    const board = document.getElementById('board');
+    let current = null;
 
-          const audio = new Audio('sounds/' + btn.dataset.sound);
-          current = { audio: audio, btn: btn };
-          btn.classList.add('is-playing');
+    function stopCurrent() {
+      if (!current) return;
+      current.audio.pause();
+      current.audio.currentTime = 0;
+      current.btn.classList.remove('is-playing');
+      current = null;
+    }
 
-          audio.addEventListener('ended', function () {
-            if (current && current.audio === audio) stopCurrent();
-          });
-          audio.play().catch(function () {
-            // Autoplay/permission hiccup — clear the playing state.
-            if (current && current.audio === audio) stopCurrent();
-          });
-        });
+    function play(btn) {
+      const wasCurrent = current && current.btn === btn;
+      stopCurrent();
+      if (wasCurrent) return; // second click on the playing pad just stops it
+
+      const audio = new Audio('sounds/' + btn.dataset.sound);
+      current = { audio: audio, btn: btn };
+      btn.classList.add('is-playing');
+      audio.addEventListener('ended', function () {
+        if (current && current.audio === audio) stopCurrent();
       });
-    })();
+      audio.play().catch(function () {
+        if (current && current.audio === audio) stopCurrent();
+      });
+    }
+
+    PADS.forEach(function (p) {
+      const btn = document.createElement('button');
+      btn.className = 'soos-pad';
+      btn.type = 'button';
+      btn.dataset.sound = p.s;
+      btn.setAttribute('aria-label', 'Play: ' + p.l);
+
+      const img = document.createElement('img');
+      img.src = 'images/' + p.i;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.width = 150;
+      img.height = 150;
+      if (p.p) img.className = p.p;
+
+      const span = document.createElement('span');
+      span.className = 'soos-label';
+      span.textContent = p.l;
+
+      btn.appendChild(img);
+      btn.appendChild(span);
+      btn.addEventListener('click', function () { play(btn); });
+      board.appendChild(btn);
+    });
   </script>
 
 </body>

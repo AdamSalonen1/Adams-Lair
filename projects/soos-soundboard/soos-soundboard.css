@@ -24,12 +24,13 @@
 
 /* --- Board --- */
 .soos-board {
-  max-width: 760px;
+  max-width: 900px;
   margin: 30px auto 0;
   padding: 0 24px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 28px 18px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 26px 16px;
+  justify-content: center;
 }
 
 /* --- Pad --- */
@@ -57,6 +58,12 @@
   box-shadow: var(--shadow);
   transition: transform 0.15s, filter 0.15s, border-color 0.15s;
 }
+
+/* Many pads use wide episode stills; nudge the crop so Soos stays framed
+   inside the circle. */
+.soos-pad img.pos-right { object-position: 78% 50%; }
+.soos-pad img.pos-left  { object-position: 22% 50%; }
+.soos-pad img.pos-top   { object-position: 50% 18%; }
 
 .soos-pad:hover img {
   transform: translateY(-4px) scale(1.03);
@@ -116,10 +123,12 @@
 }
 
 /* --- Responsive --- */
-@media (max-width: 680px) {
-  .soos-board { grid-template-columns: repeat(3, 1fr); }
-}
-
+/* The auto-fill grid reflows on its own; on small screens just tighten the
+   gutters and let the pads shrink a little further. */
 @media (max-width: 460px) {
-  .soos-board { grid-template-columns: repeat(2, 1fr); gap: 22px 14px; }
+  .soos-board {
+    padding: 0 14px;
+    gap: 20px 12px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
 }
