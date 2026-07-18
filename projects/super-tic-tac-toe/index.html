@@ -30,14 +30,20 @@
       <h1>Super Tic <span class="gradient">Tac Toe</span></h1>
       <p class="stt-sub">
         Tic-tac-toe, but each square is its own game of tic-tac-toe. Win a small
-        board to claim its square; line up three claimed squares to win. You play
-        <b>X</b> — your opponent (<b>O</b>) answers at random.
+        board to claim its square; line up three claimed squares to win. Play the
+        computer, or grab a friend for local two-player.
       </p>
     </header>
 
     <div class="stt-controls">
-      <a class="stt-btn" href="index.html">New game</a>
-      <span class="stt-turn">You're X · O plays itself</span>
+      <div class="stt-bar">
+        <div class="stt-modes" role="group" aria-label="Game mode">
+          <a class="stt-mode" href="?mode=cpu" data-mode="cpu">vs Computer</a>
+          <a class="stt-mode" href="?mode=2p" data-mode="2p">2 Players</a>
+        </div>
+        <a class="stt-btn" href="index.html" id="sttNew">New game</a>
+      </div>
+      <span class="stt-turn" id="sttTurn">Your turn (X)</span>
     </div>
 
     <div class="stt-stage">
@@ -227,8 +233,9 @@
           gets a free choice.
         </p>
         <p>
-          You're <b>X</b>. After every move you make, <b>O</b> answers on its own with
-          a random legal move. Hit <b>New game</b> to start over.
+          <b>X</b> always moves first. In <b>vs Computer</b>, you play X and O answers
+          with a random legal move; in <b>2 Players</b>, you and a friend take turns on
+          the same screen. Hit <b>New game</b> to start over.
         </p>
       </div>
     </details>

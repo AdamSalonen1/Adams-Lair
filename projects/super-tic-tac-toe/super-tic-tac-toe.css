@@ -25,11 +25,20 @@
 /* --- Controls --- */
 .stt-controls {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 6px;
+}
+
+/* Interactive controls sit on their own row so they never shift when the
+   turn readout below changes length. */
+.stt-bar {
+  display: flex;
   justify-content: center;
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  margin: 18px 0 6px;
 }
 
 .stt-btn {
@@ -54,6 +63,46 @@
   font-weight: 700;
   color: var(--ink-soft);
   font-size: 0.95rem;
+  /* Reserve a fixed footprint so changing turn text stays centered in place
+     instead of nudging the layout around it. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16ch;
+  min-height: 1.6rem;
+  text-align: center;
+}
+
+.stt-turn.is-win {
+  color: var(--red-deep);
+  font-size: 1.05rem;
+}
+
+/* --- Mode toggle --- */
+.stt-modes {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--orange-soft);
+}
+
+.stt-mode {
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: var(--orange-deep);
+  padding: 7px 16px;
+  border-radius: 999px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.stt-mode:hover { color: var(--red-deep); }
+
+.stt-mode.is-active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--orange), var(--red));
+  box-shadow: var(--shadow);
 }
 
 /* --- Board --- */

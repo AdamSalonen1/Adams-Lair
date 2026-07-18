@@ -10,12 +10,58 @@ let cellsWon = [[0,0,0],[0,0,0],[0,0,0]];
 
 let cellsWonReference = [];
 
+// Local two-player mode is opted into with ?mode=2p; otherwise O plays itself.
+const multiplayer = new URLSearchParams(window.location.search).get('mode') === '2p';
+
 if(firstRun){
+    setupModeUI();
     updateActiveCells('mainContent');
     firstRun = false;
 }
 
+function setupModeUI(){
+    const activeMode = multiplayer ? '2p' : 'cpu';
+
+    document.querySelectorAll('.stt-mode').forEach((el) => {
+        el.classList.toggle('is-active', el.dataset.mode === activeMode);
+    });
+
+    // Keep "New game" on the current mode instead of dropping back to vs Computer.
+    const newGame = document.getElementById('sttNew');
+    if (newGame) newGame.href = '?mode=' + activeMode;
+
+    updateTurnIndicator();
+}
+
+function updateTurnIndicator(winner){
+    const el = document.getElementById('sttTurn');
+    if (!el) return;
+
+    if (winner){
+        el.textContent = (winner == 'x' ? 'X' : 'O') + ' wins the game! 🎉';
+        el.classList.add('is-win');
+        return;
+    }
+
+    const xTurn = counter % 2 == 0;
+
+    if (multiplayer)
+        el.textContent = xTurn ? "X's turn" : "O's turn";
+    else
+        el.textContent = xTurn ? 'Your turn (X)' : 'O is thinking…';
+}
+
+// Strip listeners from every cell so a finished board stays visible but locked.
+function freezeBoard(){
+    document.querySelectorAll('.inner-column').forEach((cell) => {
+        cell.replaceWith(cell.cloneNode(true));
+    });
+    document.getElementById('mainContent').classList.add('is-over');
+}
+
 async function updateActiveCells(parentDiv){
+    updateTurnIndicator();
+
     let parent = document.getElementById(parentDiv);
 
     let cells = parent.querySelectorAll('.inner-column');
@@ -29,8 +75,8 @@ async function updateActiveCells(parentDiv){
         }
     })
 
-    //simulating a random opponent button click at this point
-    if (counter % 2 != 0) {
+    //simulating a random opponent button click at this point (skipped in local two-player)
+    if (!multiplayer && counter % 2 != 0) {
 
         await sleep(1000);
 
@@ -124,7 +170,9 @@ function clickHandler(element) {
 
     if (gameOver != '')
     {
-        document.getElementById('mainContent').textContent = '';
+        freezeBoard();
+        updateTurnIndicator(gameOver);
+        return;
     }
 
     valueChanged(newValue);
