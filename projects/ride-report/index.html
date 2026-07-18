@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ride Report — Adam's Lair</title>
+  <meta name="description" content="Is today a good day to ride? Live rideability score, best time windows, and mud risk for Fargo, ND.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="ride-report.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚴</text></svg>">
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="wrap">
+      <a class="brand" href="../../index.html">Adam's <span class="flame">Lair</span></a>
+      <ul>
+        <li><a href="../../index.html">Home</a></li>
+        <li><a href="../../about.html">About</a></li>
+        <li><a href="../../projects.html" class="active">Projects</a></li>
+        <li><a href="../../contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="wrap ride-main">
+
+    <header class="ride-head">
+      <span class="kicker">Fargo, ND</span>
+      <h1>Ride <span class="gradient">Report</span></h1>
+      <p class="ride-sub">Is today a good day to ride, and when?</p>
+    </header>
+
+    <section class="ride-status" id="ride-status">
+      <p class="loading">Checking the sky…</p>
+    </section>
+
+    <section class="ride-error" id="ride-error" hidden>
+      <p>Couldn't reach the weather data. Try refreshing in a bit.</p>
+    </section>
+
+    <section class="ride-content" id="ride-content" hidden>
+
+      <div class="score-card">
+        <div class="score-dial" id="score-dial">
+          <span class="score-num" id="score-num">--</span>
+        </div>
+        <div class="score-text">
+          <p class="verdict" id="verdict"></p>
+          <p class="limiting-line" id="limiting-line"></p>
+          <p class="window-callout" id="window-callout"></p>
+        </div>
+      </div>
+
+      <div class="hourly-strip" id="hourly-strip" aria-label="Hourly rideability for today"></div>
+
+      <div class="mud-badge" id="mud-badge">
+        <span class="mud-icon" id="mud-icon"></span>
+        <div>
+          <p class="mud-risk" id="mud-risk"></p>
+          <p class="mud-detail" id="mud-detail"></p>
+        </div>
+      </div>
+
+      <div class="outlook" id="outlook"></div>
+
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Adam Salonen · Adam's Lair</span>
+      <span>Built with an unreasonable amount of orange 🧡</span>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
