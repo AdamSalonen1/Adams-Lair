@@ -84,13 +84,32 @@ listener shares the same lock so scheduled and event-driven runs never overlap.
 
 ## Exit criteria
 
-- [ ] Full pipeline passes on the **desktop** with `MOCK_SYNTH=1` and for real
-- [ ] Pipeline passes on the **Pi**; timer fires on schedule unattended for 48 h
-- [ ] Killing the network mid-run produces a clean logged failure, not a
-      corrupt/partial report row
-- [ ] Malformed LLM output triggers retry-then-fallback (test by sabotaging the
-      prompt), and the fallback row renders fine on the page
-- [ ] Page now shows a Pi-generated narrative with correct freshness
+Status as of 2026-07-18. Built and verified directly on the Pi
+(`adams-blackbox`) rather than desktop-first — the desktop was unavailable, so
+the "prove it on the desktop, clone to the Pi" order was inverted.
+
+- [x] ~~Full pipeline passes on the **desktop**~~ — **N/A, inverted.** Proven on
+      the Pi with `MOCK_SYNTH=1`, `--dry-run`, and for real. The desktop has
+      never run this code.
+- [~] Pipeline passes on the **Pi** — yes, both by hand and via
+      `systemctl start`. Timer is enabled and firing; **the 48 h unattended
+      soak is still outstanding** (started 2026-07-18 ~09:55 CDT).
+- [x] Killing the network mid-run produces a clean logged failure, not a
+      corrupt/partial report row — verified two ways: no network at all
+      (`unshare -n` → 3 backoff attempts → exit 1, nothing written), and
+      Supabase unreachable *after* synthesis succeeded (exit 1, no row).
+- [x] Malformed LLM output triggers retry-then-fallback — verified by sabotaging
+      the prompt via `SYNTH_PROMPT_PATH`. Forcing `day_score: 999` was rejected
+      and the retry succeeded; forcing never-JSON failed twice and produced the
+      deterministic fallback with `source='fallback'`, exit 2. Plus 26
+      pure-function checks in `test-synth.js`. **The "renders fine on the page"
+      half is unverified — see below.**
+- [ ] Page now shows a Pi-generated narrative with correct freshness —
+      **blocked, not done.** `app.js` and `index.html` contain zero Supabase
+      references: Phase 2's "Page changes" section was never implemented in this
+      repo. The worker is writing rows that nothing reads yet. Anon reads *were*
+      verified at the API level (daily readable, trips empty, writes 401), so
+      the data side is ready for whoever picks that up.
 
 ## Notes
 

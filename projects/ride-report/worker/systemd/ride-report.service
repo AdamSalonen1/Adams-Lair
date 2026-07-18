@@ -1,0 +1,43 @@
+[Unit]
+Description=Ride Report — scheduled synthesis run
+Documentation=https://github.com/AdamSalonen1/Adams-Lair
+# The pipeline's first act is an HTTPS fetch; without this it races DHCP on boot
+# and burns its retries before the link is up.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=adams
+Group=adams
+WorkingDirectory=/home/adams/projects/Adams-Lair/projects/ride-report/worker
+EnvironmentFile=/home/adams/projects/Adams-Lair/projects/ride-report/worker/.env
+
+# claude reads OAuth from ~/.claude/.credentials.json. systemd does set HOME for
+# User=, but this is load-bearing enough to state outright — without it the CLI
+# fails auth and every run silently degrades to the fallback narrative.
+Environment=HOME=/home/adams
+Environment=NODE_ENV=production
+
+# flock is shared with Phase 4's Realtime listener so scheduled and event-driven
+# runs never overlap. -n means "skip rather than queue": if a run is already in
+# flight, the forecast hasn't changed enough to be worth waiting for.
+ExecStart=/usr/bin/flock -n /run/lock/ride-report.lock /usr/bin/node run-scheduled.js
+
+# A cold Node start plus a Claude round trip is ~30-60s on a Pi. 10 min is slack
+# for a bad network day, and bounds a hung CLI.
+TimeoutStartSec=600
+Nice=10
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ride-report
+
+# Exit codes: 0 = Claude narrative written, 1 = nothing written,
+# 2 = fallback narrative written. 2 is intentionally NOT listed as success —
+# the row landed and the page stays useful, but a persistent Claude outage
+# should show up red in `systemctl status`, not hide behind a green check.
+SuccessExitStatus=0

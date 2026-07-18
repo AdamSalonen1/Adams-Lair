@@ -1,0 +1,22 @@
+[Unit]
+Description=Ride Report — synthesis every 3 hours, 5 AM to 8 PM Central
+Documentation=https://github.com/AdamSalonen1/Adams-Lair
+
+[Timer]
+# 05:10, 08:10, 11:10, 14:10, 17:10, 20:10 Central. Forecast models don't update
+# faster than this, and a 2 AM report serves no one. The timezone is named
+# explicitly so the schedule is right regardless of the Pi's local TZ.
+OnCalendar=05..21/3:10 America/Chicago
+
+# Catch up one missed run after downtime, so a Pi that was off overnight has a
+# current report shortly after boot instead of waiting for the next slot.
+Persistent=true
+
+# Don't hammer Open-Meteo exactly on the minute.
+RandomizedDelaySec=120
+AccuracySec=1min
+
+Unit=ride-report.service
+
+[Install]
+WantedBy=timers.target
