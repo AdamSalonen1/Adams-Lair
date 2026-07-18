@@ -1,0 +1,139 @@
+/* ===== Super Tic Tac Toe — page + board styles ===== */
+
+.stt-main {
+  padding-bottom: 56px;
+}
+
+/* --- Header --- */
+.stt-head {
+  text-align: center;
+  padding: 44px 24px 6px;
+}
+
+.stt-head h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.02em;
+  margin: 14px 0 10px;
+}
+
+.stt-sub {
+  color: var(--ink-soft);
+  max-width: 60ch;
+  margin: 0 auto;
+}
+
+/* --- Controls --- */
+.stt-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 18px 0 6px;
+}
+
+.stt-btn {
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 22px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--orange), var(--red));
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.stt-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.stt-turn {
+  font-weight: 700;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+/* --- Board --- */
+.stt-stage {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 0;
+}
+
+.mainContent {
+  width: min(82vmin, 560px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+
+.row {
+  display: flex;
+  height: 33.333%;
+}
+
+.column {
+  width: 33.333%;
+  padding: 5%;
+  animation: flash 1s forwards linear normal;
+}
+
+.inner-column {
+  width: 33.333%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.inner-column img {
+  height: 50%;
+  width: 50%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+@keyframes flash {
+  0%   { background: black; }
+  2%   { background: var(--orange); }
+  100% { background: white; }
+}
+
+/* --- How to play --- */
+.stt-how {
+  max-width: 640px;
+  margin: 28px auto 0;
+  padding: 0 24px;
+}
+
+.stt-how summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--orange-deep);
+  list-style: none;
+}
+
+.stt-how summary::-webkit-details-marker { display: none; }
+
+.stt-how summary::before {
+  content: "▸ ";
+  color: var(--orange);
+}
+
+.stt-how[open] summary::before { content: "▾ "; }
+
+.stt-how .how-body {
+  margin-top: 12px;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.stt-how .how-body p { margin-bottom: 10px; }
+
+.stt-how .how-body b { color: var(--ink); }
+
+@media (max-width: 560px) {
+  .stt-stage { padding-left: 8px; padding-right: 8px; }
+}
