@@ -11,7 +11,7 @@
 import { scoreReport } from '../score.js';
 import { fetchWeather, nowInZone } from './openmeteo.js';
 import { synthesize, synthesizeTrip } from './synth.js';
-import { insertReport, getTrip } from './db.js';
+import { insertReport, getTrip, previousDailyReport } from './db.js';
 import {
   HORIZON_DAYS,
   tripWindow,
@@ -51,8 +51,14 @@ export function buildTruth(report, targetDate) {
   };
 }
 
-/** The richer picture the model narrates from — not stored in the DB row. */
-export function buildContext(report, hours, targetDate, location) {
+/**
+ * The richer picture the model narrates from — not stored in the DB row.
+ *
+ * `previous` is the last report we wrote, or null. It is context, not data:
+ * the prompt is explicit that yesterday's numbers are yesterday's, and every
+ * figure in the new narrative has to come from this run's own scoring.
+ */
+export function buildContext(report, hours, targetDate, location, previous = null) {
   const day = report.days.find((d) => d.date === targetDate) || report.days[0];
   const byTime = new Map(hours.map((h) => [h.t, h]));
 
@@ -82,6 +88,7 @@ export function buildContext(report, hours, targetDate, location) {
     units: { temperature: 'F', wind: 'mph', precipitation: 'inch' },
     daylight_hours: detail,
     upcoming_days: upcoming,
+    ...(previous ? { previous_report: previous } : {}),
   };
 }
 
@@ -110,8 +117,16 @@ export async function runDaily({
   // 2. Score. Pure, same module the browser runs.
   const report = scoreReport(hours, daily, { nowStr });
   const truth = buildTruth(report, date);
-  const context = buildContext(report, hours, date, location);
-  console.log(`[pipeline] day_score=${truth.day_score} windows=${truth.windows.length} mud=${truth.mud.risk}`);
+
+  // Read before the write, which is the only order that works: the row this
+  // run is about to insert would otherwise *be* the "previous" one. Resolves to
+  // null rather than throwing, so a report is never lost to a missing memory.
+  const previous = await previousDailyReport();
+  const context = buildContext(report, hours, date, location, previous);
+  console.log(
+    `[pipeline] day_score=${truth.day_score} windows=${truth.windows.length} mud=${truth.mud.risk}`
+    + `${previous ? ` (continuing from ${previous.generated_at})` : ''}`,
+  );
 
   // 3. Synthesize. Never throws; may return a fallback.
   const { payload: narrated, source, model } = await synthesize(truth, { context });

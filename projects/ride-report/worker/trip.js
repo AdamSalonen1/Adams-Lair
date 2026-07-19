@@ -258,8 +258,9 @@ const MUD_LABEL = {
 
 /**
  * Trip prose without the model. Same contract as synth.js's fallbackPayload:
- * never fails, never phones home, and says plainly that it is not the real
- * narrative so a persistent Claude outage is visible on the page.
+ * never fails and never phones home. That it isn't the real narrative is
+ * carried by the row's `source`, not by the prose, so a persistent Claude
+ * outage is still visible on the page — as a note, not as a sentence.
  */
 export function tripFallbackSummary(truth) {
   const parts = [];
@@ -285,7 +286,10 @@ export function tripFallbackSummary(truth) {
   if (truth.partial) {
     parts.push(`Forecast reaches ${dayName(truth.covered_through)}; the rest of the trip is still beyond the horizon.`);
   }
-  parts.push('(Narrative unavailable — this summary was generated from the score data.)');
+
+  // The "this isn't the real narrative" disclaimer used to live here. It moved
+  // to the card, which reads `source` off the row — see synth.js's
+  // fallbackPayload for the reasoning. Same fact, told once, where it shows.
 
   return {
     ...truth,

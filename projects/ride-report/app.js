@@ -1,7 +1,8 @@
 // Ride Report — glue: fetch weather, score it, render the page.
 import { fetchWeather } from './weather.js';
 import { scoreReport } from './score.js';
-import { isConfigured, fetchLatestDailyReport } from './supabase.js';
+import { isConfigured, fetchLatestDailyReport, fetchWorkerStatus } from './supabase.js';
+import { reportStatus } from './status.js';
 import { initTripsUi } from './trips.js';
 
 const LOCATION = {
@@ -9,13 +10,6 @@ const LOCATION = {
   longitude: -96.7898,
   timezone: 'America/Chicago',
 };
-
-// How old a synthesized report can be before it stops being presented as
-// current, and before it stops being shown at all. Between the two it renders
-// with a visible timestamp, because a six-hour-old narrative is still worth
-// reading as long as nobody is misled about when it was written.
-const NARRATIVE_FRESH_MS = 4 * 60 * 60 * 1000;
-const NARRATIVE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const LIMITING_LABELS = {
   temp: 'temperature',
@@ -182,13 +176,25 @@ function stampTime(date, sameDay) {
   }).format(date);
 }
 
+/** "5:10 AM", or "Fri 8:10 PM" once the timestamp is from a different day. */
+function stampFor(iso) {
+  const when = new Date(iso);
+  const zoneDay = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: LOCATION.timezone }).format(d);
+  return stampTime(when, zoneDay(when) === zoneDay(new Date()));
+}
+
 /**
- * Layer the Pi's narrative onto an already-rendered page.
+ * Layer the Pi's narrative onto an already-rendered page, and say plainly how
+ * much of it to trust.
  *
  * Everything here is additive and failure-tolerant by design: the score, the
  * strip and the outlook are computed in the browser and have already rendered
  * by the time this runs. A missing, stale, or unreachable report costs the
  * reader some prose, never the forecast.
+ *
+ * The rules live in status.js; this is the brush. The one judgement it makes is
+ * the same one the rest of the page makes — nothing here is allowed to throw
+ * away what has already rendered.
  *
  * `payload.headline` is deliberately left unrendered. It is the model's take on
  * a score computed on the Pi up to three hours ago, while the dial shows the
@@ -196,25 +202,27 @@ function stampTime(date, sameDay) {
  * verdict buckets and read as a contradiction. The prose is the part worth
  * having; the verdict line stays tied to the number beside it.
  */
-function renderNarrative(row) {
-  const summary = row?.payload?.summary;
-  if (!summary) return;
+function renderReportMeta(row, status) {
+  const { showNarrative, silent, level, notes, label } = reportStatus({
+    row,
+    status,
+    formatStamp: stampFor,
+  });
 
-  const generatedAt = new Date(row.generated_at);
-  const ageMs = Date.now() - generatedAt.getTime();
-  if (Number.isNaN(ageMs) || ageMs > NARRATIVE_MAX_AGE_MS) return;
+  if (showNarrative) {
+    const narrativeEl = document.getElementById('narrative');
+    narrativeEl.textContent = row.payload.summary;
+    narrativeEl.hidden = false;
+  }
 
-  const narrativeEl = document.getElementById('narrative');
-  narrativeEl.textContent = summary;
-  narrativeEl.hidden = false;
+  if (silent) return;
 
-  // A clock-skewed "3 minutes in the future" report is fresh, not broken.
-  if (ageMs <= NARRATIVE_FRESH_MS) return;
+  const dot = document.getElementById('status-dot');
+  dot.dataset.level = level;
+  dot.setAttribute('aria-label', label);
 
-  const zoneDay = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: LOCATION.timezone }).format(d);
-  const stampEl = document.getElementById('report-stamp');
-  stampEl.textContent = `Report from ${stampTime(generatedAt, zoneDay(generatedAt) === zoneDay(new Date()))}`;
-  stampEl.hidden = false;
+  document.getElementById('report-stamp-text').textContent = notes.join(' · ');
+  document.getElementById('report-stamp').hidden = false;
 }
 
 function render(report, todayDateStr) {
@@ -261,11 +269,21 @@ async function init() {
   // Started alongside the weather fetch rather than after it. The narrative is
   // layered on once the spine has rendered, but there is no reason to make the
   // request queue behind Open-Meteo.
-  const reportPromise = isConfigured()
-    ? fetchLatestDailyReport().catch((err) => {
-      console.warn('Ride Report: could not load the synthesized report.', err);
-      return null;
-    })
+  //
+  // Both settle to null on failure rather than rejecting, and they are settled
+  // independently: a heartbeat that fails to load must not take the narrative
+  // down with it, and vice versa.
+  const configured = isConfigured();
+  const quietly = (promise, what) => promise.catch((err) => {
+    console.warn(`Ride Report: could not load ${what}.`, err);
+    return null;
+  });
+
+  const reportPromise = configured
+    ? quietly(fetchLatestDailyReport(), 'the synthesized report')
+    : Promise.resolve(null);
+  const statusPromise = configured
+    ? quietly(fetchWorkerStatus(), "the worker's status")
     : Promise.resolve(null);
 
   let rendered = false;
@@ -285,8 +303,8 @@ async function init() {
   // for the full REST timeout whenever Supabase is slow.
   initTripsUi();
 
-  const reportRow = await reportPromise;
-  if (rendered) renderNarrative(reportRow);
+  const [reportRow, workerStatus] = await Promise.all([reportPromise, statusPromise]);
+  if (rendered) renderReportMeta(reportRow, workerStatus);
 }
 
 document.addEventListener('DOMContentLoaded', init);

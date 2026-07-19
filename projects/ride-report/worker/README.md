@@ -23,9 +23,10 @@ Supabase — no inbound port, no webhook, nothing exposed.
 | `listener.js` | Realtime daemon. Debounce, queue, gap-fill sweep. |
 | `openmeteo.js` | Fetch with timeout/retry. Imports `shapeWeather` from `../weather.js`. |
 | `synth.js` | `claude -p`, JSON extraction, validation, one retry, deterministic fallback. |
-| `db.js` | Supabase REST reads/insert + a tiny `.env` loader. |
+| `db.js` | Supabase REST reads/insert, heartbeat, retention + a tiny `.env` loader. |
+| `backup-trips.js` | Snapshots `trips` to dated JSON on the Pi. |
 | `prompt.md`, `prompt-trip.md` | The prompts, versioned like code. |
-| `test-synth.js`, `test-trip.js` | Pure-function checks. No network. |
+| `test-synth.js`, `test-trip.js`, `test-status.js` | Pure-function checks. No network. |
 
 One runtime dependency: `@supabase/supabase-js`, used only for the listener's
 Realtime socket. Everything else talks to Supabase over plain REST.
@@ -90,7 +91,11 @@ node run-trip.js --trip <uuid> --dry-run
 node run-trip.js --trip <uuid> --today 2026-08-01   # horizon testing
 
 node listener.js                   # the daemon, in the foreground
-node test-synth.js && node test-trip.js     # unit tests
+
+node backup-trips.js               # snapshot trips to ~/ride-report-backups
+node backup-trips.js --dir /mnt/usb/ride-report --keep 24
+
+node test-synth.js && node test-trip.js && node test-status.js   # unit tests
 ```
 
 `--today` is the handle for exercising the horizon without waiting for the
@@ -121,6 +126,57 @@ are correct outcomes rather than degraded ones:
 | 1 | **Nothing written** — weather or DB failure |
 | 2 | Written, but Claude failed and the deterministic summary was used |
 
+## The heartbeat
+
+Every scheduled run updates the single row in `worker_status`, **including the
+runs that fail**. A heartbeat that only beats on good days reads as healthy
+right up until the machine is dead.
+
+| Column | Written when | Means |
+|---|---|---|
+| `last_run_at` | every run | the Pi is awake and the timer is firing |
+| `last_ok_at` | only when a report row landed | the last time this actually worked |
+| `last_error` | every run, `null` when clean | why the last run wasn't clean |
+| `source_of_last_report` | when a daily report was written | `claude` or `fallback` |
+
+A failed run deliberately omits `last_ok_at` from the write, so the stored value
+keeps pointing at the last run that worked and the gap since it *is* the length
+of the outage. That single property is what the page's status dot is built on,
+and it's why the write is a `PATCH` rather than an upsert — a plain UPDATE
+touches the columns it names and leaves the rest, which is the same rule stated
+in the most boring way SQL offers.
+
+The page reads this to tell apart two silences that look identical from the
+report alone: "it's 5 AM and the timer sleeps overnight" and "the Pi is
+unplugged". `../status.js` holds those rules; `test-status.js` checks them.
+
+`last_error` is world-readable, so `db.js` truncates it to its first line and
+200 characters — a stack trace with filesystem paths in it has no business on a
+public page. The page never renders it at all; it's there for `curl` and the
+journal.
+
+```bash
+curl -s "$SUPABASE_URL/rest/v1/worker_status?select=*" \
+  -H "apikey: $SUPABASE_PUBLISHABLE_KEY" | jq
+```
+
+## Retention and backup
+
+`reports` is append-only, and a scheduled run appends to it six times a day
+forever. After a successful daily write, the run prunes `daily` reports older
+than 30 days. Trip reports are left alone — they cascade away with their trip.
+
+Pruning only happens once a row has landed *this run*, which is the whole safety
+argument: there is always something newer than the cutoff, so a Pi returning
+from two months offline prunes its backlog instead of emptying the table.
+
+Trips are the only rows here a person typed, so they're the only ones worth
+copying. `backup-trips.js` writes a dated JSON snapshot and keeps the last 12,
+skipping the write entirely when nothing has changed since the previous one —
+which is what makes a weekly timer as cheap as a monthly one. The equivalent by
+hand, capturing rather more, is `supabase db dump` (needs the Postgres
+connection string, not the REST key).
+
 ## Failure behaviour
 
 - **Open-Meteo down** → 3 attempts with backoff, then exit 1. Nothing is
@@ -129,7 +185,9 @@ are correct outcomes rather than degraded ones:
   `aqi: null`.
 - **Claude fails or returns junk** → one retry with the validation error fed
   back, then a deterministic template from the score data, `source='fallback'`.
-- **Supabase down** → exit 1 after synthesis. Next tick retries.
+- **Supabase down** → exit 1 after synthesis. Next tick retries. The heartbeat
+  write fails too, which is expected and swallowed — bookkeeping must never be
+  the thing that turns a good run red.
 - **Realtime socket drops** → supabase-js reconnects with backoff, and every
   resubscribe runs the gap-fill sweep. Events fired during the gap are gone, so
   the sweep asks the database the same question directly: which trips were
@@ -171,20 +229,23 @@ better enforcer of "the numbers are the score engine's job" than a prompt is.
 
 ```bash
 sudo cp systemd/ride-report.{service,timer} /etc/systemd/system/
+sudo cp systemd/ride-report-backup.{service,timer} /etc/systemd/system/
 sudo cp systemd/ride-report-listener.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now ride-report.timer
+sudo systemctl enable --now ride-report-backup.timer
 sudo systemctl enable --now ride-report-listener.service
 
-systemctl list-timers ride-report.timer
+systemctl list-timers 'ride-report*'
 systemctl status ride-report-listener
 journalctl -u ride-report.service -n 50 --no-pager
 journalctl -u ride-report-listener -f          # follow the daemon
 sudo systemctl start ride-report.service       # run once, now
 ```
 
-The timer runs at 05:10, 08:10, 11:10, 14:10, 17:10, 20:10 Central.
-`Persistent=true` catches up one missed run after downtime.
+The synthesis timer runs at 05:10, 08:10, 11:10, 14:10, 17:10, 20:10 Central;
+the backup timer runs Sundays at 03:30. Both set `Persistent=true` to catch up a
+missed run after downtime rather than skipping it.
 
 The listener is `Type=simple` with `Restart=always` and
 `StartLimitIntervalSec=0` — a long Supabase outage must not trip the default
@@ -216,5 +277,7 @@ range, so a fistful of upcoming trips is the thing most likely to make this
 budget feel tight.
 
 The stored OAuth token occasionally needs a re-login (`claude` over SSH, then
-`/login`). A stale `generated_at` on the page is the tripwire until Phase 5 adds
-a real heartbeat.
+`/login`). The tripwire is the page: reports keep landing, so the dot stays
+green, but they arrive labelled "auto-generated (no narrative)" and
+`worker_status.last_error` names the reason. That combination — fresh rows,
+fallback prose — means Claude specifically, not the Pi.

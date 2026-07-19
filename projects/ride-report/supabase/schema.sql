@@ -14,9 +14,10 @@
 -- world-readable, trip reports only by the trip's owner. That split is
 -- load-bearing — a trip narrative carries the same "he's out of town on these
 -- dates" signal that hiding `trips` exists to protect, so a blanket public read
--- on `reports` would leak it right back out. Writes to `reports` happen only
--- with the secret (service_role) key, which bypasses RLS; there is deliberately
--- no insert policy for anyone else.
+-- on `reports` would leak it right back out. `worker_status` is world-readable
+-- and says nothing about anyone's whereabouts. Writes to `reports` and
+-- `worker_status` happen only with the secret (service_role) key, which
+-- bypasses RLS; there is deliberately no insert policy for anyone else.
 
 -- ===== Tables =====
 
@@ -75,6 +76,49 @@ comment on column reports.payload is
 comment on column reports.source is
   '''claude'' when the narrative came from the model, ''fallback'' when it was generated deterministically from the score data.';
 
+-- ===== Worker heartbeat =====
+--
+-- One row, forever. The `id = 1` check is what makes that true rather than
+-- merely intended: the worker's create-if-missing path, a stray curl, or a
+-- future second writer would each otherwise be one typo away from adding a
+-- second row, and "what is the worker's status" would stop being a question
+-- with one answer. The page reads this table with `limit 1` and no ordering,
+-- which is only correct because the constraint holds.
+--
+-- This exists so the page can tell two very different silences apart. A daily
+-- report that is nine hours old means the Pi ran at 8 PM and it is now 5 AM —
+-- normal, the timer sleeps overnight. The same nine hours with no successful
+-- run behind it means the Pi is unplugged. `reports` alone cannot distinguish
+-- those; a row that says "I tried" can.
+--
+-- Every scheduled run writes here, INCLUDING the ones that fail. A heartbeat
+-- that only beats when things go well is a heartbeat that reads as healthy
+-- right up until the machine is dead.
+
+create table if not exists worker_status (
+  id                    smallint primary key default 1 check (id = 1),
+  last_run_at           timestamptz,
+  last_ok_at            timestamptz,
+  last_error            text,
+  source_of_last_report text check (source_of_last_report in ('claude', 'fallback'))
+);
+
+-- Seed the singleton so a plain PATCH works and the page has something to read
+-- before the worker's first run. Idempotent: re-applying this file never
+-- clobbers a live heartbeat.
+insert into worker_status (id) values (1) on conflict (id) do nothing;
+
+comment on table worker_status is
+  'Single-row heartbeat for the Pi worker. Written by every scheduled run, successful or not. World-readable — keep it free of anything private.';
+comment on column worker_status.last_run_at is
+  'Start of the most recent scheduled run, whatever became of it. This is the "is the Pi alive" field.';
+comment on column worker_status.last_ok_at is
+  'Last time a report row actually landed. Left untouched by a failed run, so the gap since is the length of the outage.';
+comment on column worker_status.last_error is
+  'Why the last run was not clean, truncated to one short line by the worker. PUBLIC — the page deliberately never renders it; it is here for curl and journalctl, not for visitors.';
+comment on column worker_status.source_of_last_report is
+  'Whether the last daily report was narrated or fell back. Duplicates reports.source on purpose, so a health check is one request instead of two.';
+
 -- ===== updated_at =====
 --
 -- A local function rather than the moddatetime extension, so this file is
@@ -104,6 +148,7 @@ create trigger trips_set_updated_at
 
 alter table trips enable row level security;
 alter table reports enable row level security;
+alter table worker_status enable row level security;
 
 -- Owner-only, all operations. There is deliberately no anon policy: a
 -- logged-out visitor querying /trips gets an empty array and HTTP 200, not an
@@ -140,6 +185,16 @@ create policy "read reports" on reports
 -- writes with the secret key, which bypasses RLS entirely. If you ever find
 -- yourself adding one here, the page has started doing something the Pi
 -- should be doing.
+
+-- The heartbeat is public to read and, like `reports`, writable only by the
+-- secret key. Public on purpose: the whole point is that a visitor's browser
+-- can tell "stale because it's 5 AM" from "stale because the Pi is down", and
+-- it can only do that if it is allowed to ask.
+drop policy if exists "read worker status" on worker_status;
+create policy "read worker status" on worker_status
+  for select
+  to anon, authenticated
+  using (true);
 
 -- ===== Realtime =====
 --

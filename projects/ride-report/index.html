@@ -50,7 +50,14 @@
           <p class="limiting-line" id="limiting-line"></p>
           <p class="window-callout" id="window-callout"></p>
           <p class="narrative" id="narrative" hidden></p>
-          <p class="report-stamp" id="report-stamp" hidden></p>
+
+          <!-- Heartbeat, at footnote weight. On a good day this is one small
+               green dot and no text; it grows a sentence only when there is
+               something the reader would be misled without. -->
+          <p class="report-stamp" id="report-stamp" hidden>
+            <span class="status-dot" id="status-dot" role="img"></span>
+            <span id="report-stamp-text"></span>
+          </p>
         </div>
       </div>
 

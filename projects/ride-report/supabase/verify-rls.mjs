@@ -196,6 +196,63 @@ async function anonChecks(seeded) {
   );
 }
 
+/**
+ * `worker_status` — public to read, secret-key-only to write.
+ *
+ * Needs no seeding: the singleton row is created by schema.sql, so every
+ * assertion here already has a real row to be tested against. Which also means
+ * these are the write checks with the most to lose — a leak here is not a
+ * disclosure, it's a stranger editing the heartbeat the page trusts.
+ */
+async function workerStatusChecks() {
+  const read = await rest('worker_status?select=last_run_at,last_ok_at,source_of_last_report');
+  check(
+    'anon can read worker_status, and there is exactly one row',
+    read.status === 200 && Array.isArray(read.json) && read.json.length === 1,
+    `HTTP ${read.status}, ${Array.isArray(read.json) ? `${read.json.length} rows` : read.text.slice(0, 120)}`,
+  );
+
+  const insert = await rest('worker_status', {
+    method: 'POST',
+    body: { id: 2, last_error: 'anon should not be able to write this' },
+  });
+  check('anon cannot insert a worker_status row', !insert.ok, `HTTP ${insert.status}`);
+
+  // Read the row back rather than trusting the response, for the reason spelled
+  // out above the report write checks: a blocked write and a write that simply
+  // returned nothing are the same HTTP 200 from out here.
+  const readBack = async () => {
+    const res = await rest('worker_status?id=eq.1&select=last_error');
+    return Array.isArray(res.json) ? res.json[0] ?? null : null;
+  };
+
+  const before = await readBack();
+  if (!before) {
+    check('worker_status singleton exists to test writes against', false, 'no row with id=1 — apply schema.sql');
+    return;
+  }
+
+  const patch = await rest('worker_status?id=eq.1', {
+    method: 'PATCH',
+    prefer: 'return=representation',
+    body: { last_error: 'anon tampered with the heartbeat' },
+  });
+  const afterPatch = await readBack();
+  check(
+    'anon cannot update worker_status',
+    afterPatch?.last_error === before.last_error,
+    `HTTP ${patch.status}, last_error is still ${JSON.stringify(afterPatch?.last_error)}`,
+  );
+
+  const del = await rest('worker_status?id=eq.1', { method: 'DELETE', prefer: 'return=representation' });
+  const afterDelete = await readBack();
+  check(
+    'anon cannot delete worker_status',
+    Boolean(afterDelete),
+    `HTTP ${del.status}, ${afterDelete ? 'row still present' : 'ROW IS GONE'}`,
+  );
+}
+
 async function main() {
   console.log(`Verifying RLS on ${url}\n`);
 
@@ -210,6 +267,7 @@ async function main() {
 
   try {
     await anonChecks(seeded);
+    await workerStatusChecks();
   } finally {
     if (seeded) {
       await cleanup(seeded);

@@ -165,6 +165,21 @@ function tripCard(trip, report) {
     li.appendChild(line);
   }
 
+  // A fallback that had a trip to narrate and couldn't — Claude was rate
+  // limited, logged out, or down. The three placeholder rows carry the same
+  // `source` (there was no LLM call to fail, because there was nothing to say
+  // yet), so flagging those too would put an outage warning on a system that
+  // is working exactly as designed.
+  const placeholder = Boolean(
+    report?.payload?.beyond_horizon || report?.payload?.past || report?.payload?.bad_location,
+  );
+  if (report?.source === 'fallback' && !placeholder && !watching.has(trip.id)) {
+    const note = document.createElement('p');
+    note.className = 'trip-source';
+    note.textContent = 'Auto-generated (no narrative)';
+    li.appendChild(note);
+  }
+
   return li;
 }
 

@@ -21,7 +21,13 @@
 // `systemctl status` should show the run as failed so a persistent Claude
 // outage is visible rather than silently degrading forever.
 
-import { loadEnv, tripsInHorizon, tripsNeedingSynthesis } from './db.js';
+import {
+  loadEnv,
+  tripsInHorizon,
+  tripsNeedingSynthesis,
+  recordHeartbeat,
+  pruneDailyReports,
+} from './db.js';
 import { runDaily, runTrip, DEFAULT_LOCATION } from './pipeline.js';
 import { nowInZone } from './openmeteo.js';
 import { HORIZON_DAYS, addDays } from './trip.js';
@@ -29,6 +35,11 @@ import { HORIZON_DAYS, addDays } from './trip.js';
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has('--dry-run');
 const tripsOnly = args.has('--trips-only');
+
+// Stamped once, up here, so the success and failure paths report the same start
+// time — and so the failure path still has one when main() threw before it got
+// anywhere near computing something.
+const ranAt = new Date().toISOString();
 
 /**
  * Every trip worth a run right now: the ones inside the forecast horizon, plus
@@ -86,6 +97,24 @@ async function refreshTrips(today) {
   return { total: trips.length, failed };
 }
 
+/**
+ * What went wrong, in one line, or null if nothing did.
+ *
+ * A degraded run is a run that went wrong: the row landed, so the page is fine,
+ * but "Claude was logged out for a week" should be legible from the heartbeat
+ * rather than only from six days of journal.
+ */
+function troubleNote(daily, trips) {
+  const notes = [];
+  if (daily.degraded) {
+    notes.push(`daily report fell back to the deterministic summary: ${daily.payload?.model?.error || 'reason not recorded'}`);
+  }
+  if (trips.failed > 0) {
+    notes.push(`${trips.failed} of ${trips.total} trip refreshes failed`);
+  }
+  return notes.length ? notes.join('; ') : null;
+}
+
 async function main() {
   await loadEnv();
 
@@ -105,20 +134,50 @@ async function main() {
 
   const trips = await refreshTrips(today);
 
+  // Only once a row has landed this run, which is what guarantees the table
+  // cannot be emptied — see pruneDailyReports(). A dry run writes nothing and
+  // therefore has earned no right to delete anything either.
+  if (!dryRun && daily.row) await pruneDailyReports();
+
   const elapsed = ((Date.now() - startedAt.getTime()) / 1000).toFixed(1);
   console.log(
     `[run] done in ${elapsed}s — daily source=${daily.source} row=${daily.row?.id ?? '(none)'};`
     + ` trips ${trips.total - trips.failed}/${trips.total} ok`,
   );
 
-  return (daily.degraded || trips.failed > 0) ? 2 : 0;
+  return {
+    code: (daily.degraded || trips.failed > 0) ? 2 : 0,
+    okAt: daily.row ? new Date().toISOString() : null,
+    // Left null on --trips-only, which wrote no daily report and so has no
+    // opinion on where the last one came from.
+    source: tripsOnly ? null : daily.source,
+    error: troubleNote(daily, trips),
+  };
 }
 
-main()
-  .then((code) => process.exit(code))
-  .catch((err) => {
+// Two handlers passed to one .then(), rather than .then().catch(). The
+// difference matters here: chaining a .catch() would also catch a throw from
+// the success handler, and the failure handler's first act is to log "no report
+// written" — which would be a lie about a run that wrote one. This way the
+// failure path is reachable only from main() itself failing.
+main().then(
+  async ({ code, okAt, source, error }) => {
+    // The heartbeat is bookkeeping, not the job: it runs after the work is
+    // done and recordHeartbeat() swallows its own failures, so a Supabase
+    // hiccup here cannot turn a run that wrote a good report into a red one.
+    if (!dryRun) await recordHeartbeat({ ranAt, okAt, source, error });
+    return code;
+  },
+  async (err) => {
     // Nothing was written. Log the reason plainly; the next tick retries.
     console.error(`[run] FAILED — no report written: ${err.message}`);
     if (process.env.DEBUG) console.error(err.stack);
-    process.exit(1);
-  });
+    // Deliberately still writes a heartbeat — with no `okAt`, so the stored
+    // last_ok_at keeps pointing at the last run that actually worked and the
+    // gap since it is the length of the outage. This is the case the whole
+    // table exists for; skipping it here would leave the page's status dot
+    // green throughout an outage.
+    if (!dryRun) await recordHeartbeat({ ranAt, error: err });
+    return 1;
+  },
+).then((code) => process.exit(code));

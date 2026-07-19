@@ -288,7 +288,11 @@ export function fallbackPayload(truth) {
     parts.push('No daylight window worth calling out today.');
   }
   if (mud?.risk) parts.push(MUD_LABEL[mud.risk] || '');
-  parts.push('(Narrative unavailable — this summary was generated from the score data.)');
+
+  // No "narrative unavailable" disclaimer in the prose. That fact lives in the
+  // row's `source` column, where it is machine-readable, and the page renders
+  // it as a small note beside the summary — which is both more visible at a
+  // glance and one less sentence of apology to read on a bad day.
 
   return {
     ...truth,

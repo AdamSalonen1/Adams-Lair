@@ -29,21 +29,9 @@ export function isConfigured() {
   return Boolean(baseUrl && SUPABASE_PUBLISHABLE_KEY);
 }
 
-// ===== Public read: the daily report =====
+// ===== Public reads: the daily report and the worker's heartbeat =====
 
-/**
- * Newest `kind='daily'` report, or null if there are none. Readable by anyone —
- * that is the one thing the RLS policy hands out to anonymous visitors.
- */
-export async function fetchLatestDailyReport() {
-  if (!isConfigured()) return null;
-
-  const query = 'reports'
-    + '?kind=eq.daily'
-    + '&select=id,source,generated_at,payload'
-    + '&order=generated_at.desc'
-    + '&limit=1';
-
+async function publicRead(query, what) {
   const res = await fetch(`${baseUrl}/rest/v1/${query}`, {
     headers: {
       apikey: SUPABASE_PUBLISHABLE_KEY,
@@ -53,11 +41,41 @@ export async function fetchLatestDailyReport() {
   });
 
   if (!res.ok) {
-    throw new Error(`Supabase returned HTTP ${res.status} reading the daily report`);
+    throw new Error(`Supabase returned HTTP ${res.status} reading ${what}`);
   }
 
   const rows = await res.json();
   return Array.isArray(rows) && rows.length ? rows[0] : null;
+}
+
+/**
+ * Newest `kind='daily'` report, or null if there are none. Readable by anyone —
+ * one of the two things the RLS policies hand out to anonymous visitors.
+ */
+export function fetchLatestDailyReport() {
+  if (!isConfigured()) return Promise.resolve(null);
+
+  return publicRead(
+    'reports?kind=eq.daily&select=id,source,generated_at,payload&order=generated_at.desc&limit=1',
+    'the daily report',
+  );
+}
+
+/**
+ * The worker's heartbeat row, or null.
+ *
+ * `last_error` is deliberately not selected. It is world-readable and the page
+ * has no business rendering a raw error string to a visitor — the page's job is
+ * to say "this is old", not to explain the Pi's internals to a stranger. The
+ * column is there for `curl` and the journal.
+ */
+export function fetchWorkerStatus() {
+  if (!isConfigured()) return Promise.resolve(null);
+
+  return publicRead(
+    'worker_status?select=last_run_at,last_ok_at,source_of_last_report&limit=1',
+    'the worker status',
+  );
 }
 
 // ===== supabase-js: auth and trips =====

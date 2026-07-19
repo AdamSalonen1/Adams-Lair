@@ -193,8 +193,11 @@ check('fallback preserves ground truth', () => {
 check('fallback names the best day', () => {
   assert.match(tripFallbackSummary(truth).summary, /Wed, Jul 22/);
 });
-check('fallback admits it is not the real narrative', () => {
-  assert.match(tripFallbackSummary(truth).summary, /Narrative unavailable/);
+// The disclaimer moved out of the prose and onto the card, which reads it off
+// the row's `source`. Asserted as an absence so it doesn't drift back in and
+// end up printed twice.
+check('fallback leaves the disclaimer to the page', () => {
+  assert.doesNotMatch(tripFallbackSummary(truth).summary, /Narrative unavailable/);
 });
 check('fallback quotes the best window in plain time', () => {
   const oneDay = buildTripTruth(report, hours, { coveredStart: '2026-07-20', coveredEnd: '2026-07-20' }, trip('2026-07-20', '2026-07-20'));

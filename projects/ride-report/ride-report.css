@@ -115,6 +115,9 @@
 }
 
 .report-stamp {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   text-align: left;
   margin-top: 8px;
   font-size: 0.78rem;
@@ -123,6 +126,26 @@
   text-transform: uppercase;
   color: var(--ink-soft);
 }
+
+/* The whole heartbeat UI. Deliberately a dot and not a dashboard: on a healthy
+   day it is 8 pixels of green in the corner of a footnote, which is all a
+   working system has earned. `flex: none` keeps it circular when the sentence
+   beside it wraps. */
+.status-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--score-na);
+}
+
+.status-dot[data-level="ok"] { background: var(--score-good); }
+.status-dot[data-level="stale"] { background: var(--score-mid); }
+.status-dot[data-level="down"] { background: var(--score-bad); }
+
+/* An empty text span still occupies the flex gap, which leaves the dot looking
+   nudged off the left margin on a good day. */
+#report-stamp-text:empty { display: none; }
 
 /* ===== Hourly strip ===== */
 .hourly-strip {
@@ -424,6 +447,17 @@
   color: var(--ink-soft);
   font-size: 0.82rem;
   letter-spacing: 0.01em;
+}
+
+/* Same footnote weight as .report-stamp on the daily card, so "the prose is
+   machine-written today" reads the same way in both places. */
+.trip-source {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
 }
 
 .trip-stamp {

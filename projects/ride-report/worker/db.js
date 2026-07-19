@@ -132,6 +132,129 @@ export async function latestReport(kind = 'daily') {
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
+/**
+ * The daily report this run is about to supersede, reduced to the parts worth
+ * remembering. Feeds the prompt's continuity section — "still soggy from
+ * Tuesday's rain" beats writing every report from amnesia.
+ *
+ * Windows are deliberately left out. They are the one part of a report that is
+ * always about *this* day, so carrying them over invites the model to narrate a
+ * window that has already been and gone.
+ *
+ * Returns null when there is no previous report, or when reading it fails. A
+ * missing memory costs continuity; it must never cost the report.
+ */
+export async function previousDailyReport() {
+  try {
+    const rows = await request(
+      'reports?kind=eq.daily&select=generated_at,source,payload&order=generated_at.desc&limit=1',
+      { method: 'GET' },
+    );
+    const row = Array.isArray(rows) && rows.length ? rows[0] : null;
+    if (!row?.payload?.summary) return null;
+
+    return {
+      generated_at: row.generated_at,
+      day_score: row.payload.day_score ?? null,
+      mud: row.payload.mud ?? null,
+      summary: row.payload.summary,
+    };
+  } catch (err) {
+    console.warn(`[db] could not read the previous report for continuity: ${err.message}`);
+    return null;
+  }
+}
+
+// ===== Heartbeat (Phase 5) =====
+
+/** One short line. `last_error` is world-readable; keep it small and boring. */
+function oneLine(error) {
+  if (!error) return null;
+  const text = typeof error === 'string' ? error : error.message || String(error);
+  return text.split('\n')[0].trim().slice(0, 200) || null;
+}
+
+/**
+ * Update the single `worker_status` row.
+ *
+ * Never throws. A run whose report landed must not be reported as failed
+ * because the bookkeeping that followed it didn't — and a run that already
+ * failed because Supabase is unreachable will fail to write this too, which is
+ * both expected and already logged by the time we get here.
+ *
+ * Only the fields passed are sent, and a failed run deliberately does not pass
+ * `okAt`. That is the mechanism behind the whole table: `last_ok_at` keeps
+ * pointing at the last run that actually worked, so the gap since it is the
+ * length of the outage.
+ */
+export async function recordHeartbeat({ ranAt, okAt = null, error = null, source = null } = {}) {
+  const fields = {
+    last_run_at: ranAt || new Date().toISOString(),
+    // Always written, including as null: a clean run has to be able to clear
+    // the error left behind by the last broken one.
+    last_error: oneLine(error),
+    ...(okAt ? { last_ok_at: okAt } : {}),
+    ...(source ? { source_of_last_report: source } : {}),
+  };
+
+  try {
+    // PATCH rather than an upsert. A plain UPDATE touches the columns named and
+    // leaves every other one alone — which is exactly the property above, in
+    // the most boring way SQL offers. An upsert would express the same intent
+    // through which keys happen to be in the JSON body, and that is a subtle
+    // rule to hang the one behaviour this table exists for on.
+    const updated = await request('worker_status?id=eq.1', {
+      method: 'PATCH',
+      body: fields,
+      prefer: 'return=representation',
+    });
+    if (Array.isArray(updated) && updated.length) return;
+
+    // Nothing to update: schema.sql's seed hasn't run, or the row was deleted.
+    // Create it rather than going quiet, because a heartbeat that needs someone
+    // to notice a missing row first is a heartbeat that is absent on precisely
+    // the day it was supposed to speak up.
+    await request('worker_status', { body: { id: 1, ...fields } });
+    console.log('[db] worker_status row was missing — created it');
+  } catch (err) {
+    console.warn(`[db] heartbeat write failed: ${err.message}`);
+  }
+}
+
+// ===== Retention (Phase 5) =====
+
+/**
+ * Drop `daily` reports older than `days`. Trip reports are left alone — they
+ * cascade away with their trip, and a trip's history is small and finite.
+ *
+ * At one-user scale this is never load-bearing; `reports` would take years to
+ * become inconvenient. It runs because an append-only table with no expiry is
+ * the kind of thing that is obvious in hindsight and invisible until then.
+ *
+ * Call this only after a report has been written this run. That ordering is the
+ * whole safety argument: there is always at least one row newer than the
+ * cutoff, so a Pi that comes back after two months offline prunes its backlog
+ * rather than emptying the table and leaving the page with nothing to read.
+ *
+ * Never throws. Tidying is the least important thing a run does.
+ */
+export async function pruneDailyReports({ days = 30 } = {}) {
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+
+  try {
+    const deleted = await request(
+      `reports?kind=eq.daily&generated_at=lt.${encodeURIComponent(cutoff)}&select=id`,
+      { method: 'DELETE', prefer: 'return=representation' },
+    );
+    const count = Array.isArray(deleted) ? deleted.length : 0;
+    if (count) console.log(`[db] pruned ${count} daily report(s) older than ${days} days`);
+    return count;
+  } catch (err) {
+    console.warn(`[db] prune failed (harmless, will retry next run): ${err.message}`);
+    return 0;
+  }
+}
+
 // ===== Trips (Phase 4) =====
 //
 // All of these read with the secret key, which bypasses RLS — the worker is
@@ -162,6 +285,19 @@ export async function tripsInHorizon(today, horizonEnd) {
     + `&start_date=lte.${encodeURIComponent(horizonEnd)}`
     + `&end_date=gte.${encodeURIComponent(today)}`
     + '&order=start_date.asc',
+    { method: 'GET' },
+  );
+  return Array.isArray(rows) ? rows : [];
+}
+
+/**
+ * Every trip there is, past ones included. Only the backup job wants this —
+ * the pipeline never does, because a trip that already happened has nothing
+ * left to forecast.
+ */
+export async function allTrips() {
+  const rows = await request(
+    `trips?select=${TRIP_FIELDS},created_at&order=start_date.asc`,
     { method: 'GET' },
   );
   return Array.isArray(rows) ? rows : [];
