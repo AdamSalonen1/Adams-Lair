@@ -141,7 +141,17 @@ create policy "read reports" on reports
 -- yourself adding one here, the page has started doing something the Pi
 -- should be doing.
 
--- ===== Realtime (Phase 4 needs this; enabling it now costs nothing) =====
+-- ===== Realtime =====
+--
+-- `trips` only. The Pi's listener opens a WebSocket to this publication and
+-- synthesizes whatever changes.
+--
+-- `reports` is deliberately NOT published. The page needs to know when a fresh
+-- trip outlook lands, and a subscription is the prettier way to learn it — but
+-- it would mean putting a table whose entire security story is "trip narratives
+-- are owner-only" onto a broadcast channel, and trusting Realtime's RLS
+-- handling to keep it that way. The page polls instead, for ninety seconds
+-- after a save. That is a worse mechanism and a better trade.
 
 do $$
 begin

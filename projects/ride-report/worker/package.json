@@ -10,5 +10,8 @@
   "scripts": {
     "start": "node run-scheduled.js",
     "mock": "MOCK_SYNTH=1 node run-scheduled.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.7"
   }
 }

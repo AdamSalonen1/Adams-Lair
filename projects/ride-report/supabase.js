@@ -179,6 +179,28 @@ export async function latestTripReports(tripIds = []) {
   return new Map(rows.filter(Boolean).map((row) => [row.trip_id, row]));
 }
 
+/**
+ * Newest report for a single trip, or null. Same query as latestTripReports()
+ * does per trip — split out because the "outlook generating…" poll asks about
+ * one trip repeatedly, and rebuilding a Map for one row reads like it means
+ * something it doesn't.
+ */
+export async function latestTripReport(tripId) {
+  const supabase = await getClient();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('reports')
+    .select('trip_id,generated_at,source,payload')
+    .eq('kind', 'trip')
+    .eq('trip_id', tripId)
+    .order('generated_at', { ascending: false })
+    .limit(1);
+
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
 export async function createTrip(fields) {
   const supabase = await getClient();
   if (!supabase) throw new Error('Not connected to Supabase.');

@@ -109,6 +109,13 @@ export function nowInZone(timeZone) {
  * Fetch forecast (required, retried) + air quality (best-effort) and shape
  * them with the browser's own shapeWeather. Throws if the forecast can't be
  * had — the caller must not write a report in that case.
+ *
+ * Returns `{ hours, daily, timezone }`. The `timezone` echo matters for trips
+ * (Phase 4): a trip carries lat/lon but no timezone, so it asks for
+ * `timezone=auto` and Open-Meteo resolves the zone from the coordinates. Every
+ * timestamp in `hours` is then wall-clock in *that* zone, and nowInZone() needs
+ * the resolved name to produce a matching `nowStr`. Passing the Pi's zone
+ * instead would silently misalign "now" against a trip in another timezone.
  */
 export async function fetchWeather({
   latitude,
@@ -139,5 +146,7 @@ export async function fetchWeather({
 
   const shaped = shapeWeather(forecast, airQuality);
   if (!shaped.hours?.length) throw new Error('Open-Meteo returned no hourly data');
-  return shaped;
+  // `forecast.timezone` is the resolved IANA name — the same string that was
+  // sent, unless it was 'auto', in which case this is the answer.
+  return { ...shaped, timezone: forecast.timezone || timezone };
 }

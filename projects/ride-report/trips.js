@@ -15,6 +15,7 @@ import {
   signOut,
   listTrips,
   latestTripReports,
+  latestTripReport,
   createTrip,
   updateTrip,
   deleteTrip,
@@ -22,10 +23,32 @@ import {
 
 const HOME = { location_name: 'Fargo, ND', lat: 46.8772, lon: -96.7898 };
 
+// How long to wait for the Pi after a save. The listener debounces ~5s, then a
+// synthesis run is tens of seconds on a Pi; 90s covers that with room, and if
+// the lock is held by a scheduled run it can legitimately take longer — hence
+// the timeout message says "still working" rather than "failed".
+const WATCH_MS = 90_000;
+const POLL_MS = 5_000;
+
 let el = {};
 let session = null;
 let editingId = null;
 let started = false;
+
+// Trips whose outlook we're waiting on, and the report stamp each had at save
+// time. Module-level rather than per-card because refreshTrips() rebuilds every
+// card from scratch — state living on a DOM node would not survive the rerender
+// that the save itself triggers.
+const watching = new Map();
+// Trips whose watch ran out before a report landed, mapped to the stamp they
+// were waiting to see replaced. Distinct from "pending" because it means
+// something different: the Pi was asked and hasn't answered yet, rather than
+// never having been asked. Keeping the stamp lets a later refresh notice the
+// outlook did eventually land and drop the message.
+const stalled = new Map();
+// Latest reports from the most recent refresh, so a save knows which stamp it
+// is waiting to see replaced without an extra round trip to ask.
+let lastReports = new Map();
 
 function byId(id) {
   return document.getElementById(id);
@@ -71,6 +94,10 @@ function formatStamp(iso) {
   }).format(new Date(iso));
 }
 
+function formatWeekday(dateStr) {
+  return new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(localDate(dateStr));
+}
+
 // ===== Trip list =====
 
 function tripCard(trip, report) {
@@ -104,11 +131,19 @@ function tripCard(trip, report) {
     li.appendChild(notes);
   }
 
-  // Populated by the Phase 4 listener. Until then every trip shows the pending
-  // line, which is the honest state rather than an empty space.
+  // Written by the Pi — either the listener, seconds after a save, or the
+  // scheduled run refreshing it as the forecast firms up. Each branch below is
+  // a real state the trip can be in; none of them is an empty space.
   const outlook = document.createElement('p');
   outlook.className = 'trip-outlook';
-  if (report?.payload?.summary) {
+
+  if (watching.has(trip.id)) {
+    outlook.classList.add('is-generating');
+    outlook.textContent = 'Outlook generating…';
+  } else if (stalled.has(trip.id)) {
+    outlook.classList.add('is-pending');
+    outlook.textContent = 'Still working on the outlook — check back in a minute.';
+  } else if (report?.payload?.summary) {
     outlook.textContent = report.payload.summary;
     const stamp = document.createElement('span');
     stamp.className = 'trip-stamp';
@@ -119,6 +154,16 @@ function tripCard(trip, report) {
     outlook.textContent = 'Outlook pending.';
   }
   li.appendChild(outlook);
+
+  // The days worth riding, already ranked by the worker. Deterministic data, so
+  // it stays true even when the narrative above came from the fallback.
+  const best = report?.payload?.best_days;
+  if (best?.length && !watching.has(trip.id)) {
+    const line = document.createElement('p');
+    line.className = 'trip-best';
+    line.textContent = `Best: ${best.map(formatWeekday).join(', ')}`;
+    li.appendChild(line);
+  }
 
   return li;
 }
@@ -132,6 +177,15 @@ async function refreshTrips() {
     // owner-scoped by RLS, so neither needs to know who is logged in.
     const trips = await listTrips();
     const reports = await latestTripReports(trips.map((trip) => trip.id));
+    lastReports = reports;
+
+    // A watch that timed out doesn't mean the Pi gave up — a run queued behind
+    // the scheduled job can land minutes later. If the outlook has since
+    // arrived, retire the "still working" line rather than leaving it up.
+    for (const [tripId, since] of stalled) {
+      const arrived = reports.get(tripId);
+      if (arrived && arrived.generated_at !== since) stalled.delete(tripId);
+    }
 
     el.tripList.replaceChildren(...trips.map((trip) => tripCard(trip, reports.get(trip.id))));
     show(el.tripsEmpty, trips.length === 0);
@@ -139,6 +193,67 @@ async function refreshTrips() {
     console.error('Ride Report: could not load trips.', err);
     setMessage(el.tripError, 'Could not load trips. Try refreshing.', true);
   }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Poll one trip's report until a newer one appears, then rerender.
+ *
+ * Polling rather than a browser Realtime subscription. Both were on the table
+ * and the socket is the prettier answer, but it isn't the cheaper one here: it
+ * would mean enabling the publication on `reports` and trusting Realtime's RLS
+ * handling for a table whose whole security story is that trip narratives are
+ * owner-only. This runs for ninety seconds after a deliberate click, a handful
+ * of times a week. Polling is a fair trade for keeping that table off the wire.
+ */
+async function watchOutlook(tripId, token) {
+  const deadline = Date.now() + WATCH_MS;
+  // A save during an active watch starts a new one. The token is how this loop
+  // notices it has been superseded — without it, two loops would poll the same
+  // trip and race to rerender.
+  const stillMine = () => watching.get(tripId)?.token === token;
+
+  while (Date.now() < deadline) {
+    await sleep(POLL_MS);
+    // Cancelled (deleted, signed out) or superseded.
+    if (!stillMine()) return;
+
+    let report;
+    try {
+      report = await latestTripReport(tripId);
+    } catch (err) {
+      // Transient — a dropped request shouldn't abandon the watch. If it keeps
+      // failing, the deadline ends it.
+      console.warn('Ride Report: polling for the trip outlook failed.', err);
+      continue;
+    }
+
+    if (!stillMine()) return;
+
+    if (report && report.generated_at !== watching.get(tripId).since) {
+      watching.delete(tripId);
+      stalled.delete(tripId);
+      await refreshTrips();
+      return;
+    }
+  }
+
+  if (!stillMine()) return;
+  const { since } = watching.get(tripId);
+  watching.delete(tripId);
+  stalled.set(tripId, since);
+  await refreshTrips();
+}
+
+let watchToken = 0;
+
+/** Begin watching a trip for a fresh outlook, superseding any watch in flight. */
+function startWatch(tripId) {
+  stalled.delete(tripId);
+  const token = (watchToken += 1);
+  watching.set(tripId, { since: lastReports.get(tripId)?.generated_at ?? null, token });
+  watchOutlook(tripId, token);
 }
 
 // ===== Trip form =====
@@ -169,12 +284,36 @@ function closeForm() {
   show(el.tripAdd, true);
 }
 
+/**
+ * Read a coordinate input. The blank check is load-bearing: `Number('')` is 0,
+ * not NaN, so an empty field would otherwise sail through a Number.isFinite
+ * test and be saved as a perfectly plausible zero. Latitude 0, longitude 0 is a
+ * real spot in the Gulf of Guinea, and the worker will happily forecast it —
+ * which is exactly how a trip ends up with a confident outlook for open ocean.
+ */
+function readCoordinate(input, name, limit) {
+  const raw = input.value.trim();
+  // Also catches `type="number"` bad input, which reports an empty string.
+  if (!raw) return { error: `${name} is required — it's what the forecast is fetched for.` };
+
+  const value = Number(raw);
+  if (!Number.isFinite(value)) return { error: `${name} must be a number.` };
+  if (value < -limit || value > limit) return { error: `${name} must be between -${limit} and ${limit}.` };
+
+  return { value };
+}
+
 function readForm() {
+  const lat = readCoordinate(el.tripLat, 'Latitude', 90);
+  if (lat.error) return { error: lat.error };
+  const lon = readCoordinate(el.tripLon, 'Longitude', 180);
+  if (lon.error) return { error: lon.error };
+
   const fields = {
     title: el.tripTitle.value.trim(),
     location_name: el.tripLocation.value.trim(),
-    lat: Number(el.tripLat.value),
-    lon: Number(el.tripLon.value),
+    lat: lat.value,
+    lon: lon.value,
     start_date: el.tripStart.value,
     end_date: el.tripEnd.value,
     notes: el.tripNotes.value.trim() || null,
@@ -185,9 +324,6 @@ function readForm() {
   // ISO dates compare correctly as strings, and the same rule is enforced by a
   // CHECK constraint — this exists to say so in English before the round trip.
   if (fields.end_date < fields.start_date) return { error: 'The end date is before the start date.' };
-  if (!Number.isFinite(fields.lat) || !Number.isFinite(fields.lon)) {
-    return { error: 'Latitude and longitude must be numbers.' };
-  }
 
   return { fields };
 }
@@ -203,9 +339,12 @@ async function handleSubmit(event) {
 
   el.tripSave.disabled = true;
   try {
-    if (editingId) await updateTrip(editingId, fields);
-    else await createTrip(fields);
+    // The saved row's id, which for a create is only knowable after the insert.
+    const saved = editingId ? await updateTrip(editingId, fields) : await createTrip(fields);
     closeForm();
+    // Order matters: mark it watched before rendering, so the card comes back
+    // saying "generating…" rather than flashing the old outlook first.
+    if (saved?.id) startWatch(saved.id);
     await refreshTrips();
   } catch (err) {
     console.error('Ride Report: saving the trip failed.', err);
@@ -221,7 +360,12 @@ async function handleDelete() {
 
   el.tripDelete.disabled = true;
   try {
-    await deleteTrip(editingId);
+    const deletedId = editingId;
+    await deleteTrip(deletedId);
+    // Stop any watch on it — its reports went with it via the FK cascade, so
+    // there is nothing left to poll for.
+    watching.delete(deletedId);
+    stalled.delete(deletedId);
     closeForm();
     await refreshTrips();
   } catch (err) {
@@ -276,6 +420,11 @@ function applySession(next) {
     if (!wasLoggedIn) refreshTrips();
   } else {
     closeForm();
+    // Drop every watch: the polls would 200-with-nothing under RLS anyway, and
+    // a signed-out page has no card left to rerender into.
+    watching.clear();
+    stalled.clear();
+    lastReports = new Map();
     el.tripList.replaceChildren();
     show(el.tripsEmpty, false);
   }

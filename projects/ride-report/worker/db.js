@@ -81,7 +81,14 @@ async function request(pathname, { method = 'POST', body, prefer, timeoutMs = DE
 
     const text = await res.text();
     if (!res.ok) {
-      throw new Error(`Supabase ${method} ${pathname} failed: HTTP ${res.status} ${text.slice(0, 300)}`);
+      const err = new Error(`Supabase ${method} ${pathname} failed: HTTP ${res.status} ${text.slice(0, 300)}`);
+      err.status = res.status;
+      // PostgREST passes the Postgres SQLSTATE through as `code`. Carrying it
+      // on the error lets callers tell apart the failures that mean something
+      // specific — 23503, a trip deleted out from under an in-flight report —
+      // from the generic ones, without parsing the message back out.
+      try { err.code = JSON.parse(text)?.code; } catch { /* not JSON; leave it unset */ }
+      throw err;
     }
     return text ? JSON.parse(text) : null;
   } catch (err) {
@@ -123,4 +130,84 @@ export async function latestReport(kind = 'daily') {
     { method: 'GET' },
   );
   return Array.isArray(rows) && rows.length ? rows[0] : null;
+}
+
+// ===== Trips (Phase 4) =====
+//
+// All of these read with the secret key, which bypasses RLS — the worker is
+// deliberately not owner-scoped. It synthesizes for whoever owns the trip; the
+// owner check happens on the way back out, when the page reads the report.
+
+const TRIP_FIELDS = 'id,user_id,title,location_name,lat,lon,start_date,end_date,notes,updated_at';
+
+/** One trip by id, or null if it has since been deleted. */
+export async function getTrip(id) {
+  const rows = await request(
+    `trips?id=eq.${encodeURIComponent(id)}&select=${TRIP_FIELDS}&limit=1`,
+    { method: 'GET' },
+  );
+  return Array.isArray(rows) && rows.length ? rows[0] : null;
+}
+
+/**
+ * Trips worth regenerating on a scheduled run: already started or starting
+ * within the horizon, and not yet over.
+ *
+ * `horizonEnd` is passed in rather than computed here so the caller's notion of
+ * "today" stays the single source of truth for the whole run.
+ */
+export async function tripsInHorizon(today, horizonEnd) {
+  const rows = await request(
+    `trips?select=${TRIP_FIELDS}`
+    + `&start_date=lte.${encodeURIComponent(horizonEnd)}`
+    + `&end_date=gte.${encodeURIComponent(today)}`
+    + '&order=start_date.asc',
+    { method: 'GET' },
+  );
+  return Array.isArray(rows) ? rows : [];
+}
+
+/**
+ * Every trip that hasn't ended yet — including ones far past the horizon, which
+ * still need their placeholder written once. This is the gap-fill sweep's
+ * candidate set.
+ */
+export async function activeTrips(today) {
+  const rows = await request(
+    `trips?select=${TRIP_FIELDS}&end_date=gte.${encodeURIComponent(today)}&order=start_date.asc`,
+    { method: 'GET' },
+  );
+  return Array.isArray(rows) ? rows : [];
+}
+
+/** `generated_at` of a trip's newest report, or null if it has none. */
+export async function latestTripReportStamp(tripId) {
+  const rows = await request(
+    `reports?kind=eq.trip&trip_id=eq.${encodeURIComponent(tripId)}`
+    + '&select=generated_at&order=generated_at.desc&limit=1',
+    { method: 'GET' },
+  );
+  return Array.isArray(rows) && rows.length ? rows[0].generated_at : null;
+}
+
+/**
+ * Trips whose newest report is older than their last edit (or which have no
+ * report at all) — i.e. the ones a Realtime event should have covered and
+ * didn't, because the socket was down when it fired.
+ *
+ * One capped query per trip rather than one sweep of `reports`, for the reason
+ * spelled out in ../supabase.js: `reports` is append-only and every scheduled
+ * run appends to it, so a sweep grows without bound while the answer stays a
+ * handful of rows. Trips are counted in ones and twos.
+ */
+export async function tripsNeedingSynthesis(today) {
+  const trips = await activeTrips(today);
+
+  const stale = await Promise.all(trips.map(async (trip) => {
+    const stamp = await latestTripReportStamp(trip.id);
+    if (!stamp) return trip;
+    return Date.parse(trip.updated_at) > Date.parse(stamp) ? trip : null;
+  }));
+
+  return stale.filter(Boolean);
 }

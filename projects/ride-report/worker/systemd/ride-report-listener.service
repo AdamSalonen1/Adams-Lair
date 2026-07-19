@@ -1,0 +1,51 @@
+[Unit]
+Description=Ride Report — Realtime trip listener
+Documentation=https://github.com/AdamSalonen1/Adams-Lair
+# Opens a WebSocket to Supabase on startup, so it needs a routable link, not
+# just a configured interface.
+After=network-online.target
+Wants=network-online.target
+# Never give up restarting. A multi-hour Supabase or network outage would
+# otherwise trip the default rate limiter and leave the listener down long after
+# the outage cleared, which is the one failure this daemon must not have.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=adams
+Group=adams
+WorkingDirectory=/home/adams/projects/Adams-Lair/projects/ride-report/worker
+EnvironmentFile=/home/adams/projects/Adams-Lair/projects/ride-report/worker/.env
+
+# The child pipeline shells out to `claude`, which reads OAuth from
+# ~/.claude/.credentials.json. Same reasoning as ride-report.service: systemd
+# does set HOME for User=, but this is load-bearing enough to state outright.
+Environment=HOME=/home/adams
+Environment=NODE_ENV=production
+
+# No flock here. The daemon does not synthesize — it spawns run-trip.js under
+# flock itself, per job. Wrapping the daemon would hold the lock for its entire
+# lifetime and permanently lock out the timer.
+ExecStart=/usr/bin/node listener.js
+
+# supabase-js reconnects on its own with backoff; this covers the case where the
+# process itself died. RestartSec keeps a crash loop from hammering Supabase.
+Restart=always
+RestartSec=10
+
+# SIGTERM lets it close the channel and finish the run in flight. A trip
+# synthesis is tens of seconds; 120 is slack, not a target.
+KillSignal=SIGTERM
+TimeoutStopSec=120
+
+Nice=10
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ride-report-listener
+
+[Install]
+WantedBy=multi-user.target

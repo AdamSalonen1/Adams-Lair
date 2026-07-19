@@ -11,10 +11,13 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { tripFallbackSummary } from './trip.js';
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // Overridable so prompt variants can be A/B'd (and sabotaged in tests) without
 // editing the versioned prompt.
 const PROMPT_PATH = process.env.SYNTH_PROMPT_PATH || path.join(HERE, 'prompt.md');
+const TRIP_PROMPT_PATH = process.env.SYNTH_TRIP_PROMPT_PATH || path.join(HERE, 'prompt-trip.md');
 
 const DEFAULT_MODEL = process.env.CLAUDE_MODEL || 'sonnet';
 const DEFAULT_TIMEOUT_MS = Number(process.env.SYNTH_TIMEOUT_MS || 180_000);
@@ -106,6 +109,31 @@ export function validatePayload(payload) {
   return errors;
 }
 
+/**
+ * Validate a trip narrative. Far looser than the daily check, and deliberately
+ * so: the trip prompt asks for prose *only* — the scores, windows and per-day
+ * mud are attached by code and never round-trip through the model, so there is
+ * no numeric agreement left to police here.
+ */
+export function validateTripPayload(payload) {
+  const errors = [];
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return ['Response must be a single JSON object.'];
+  }
+
+  if (typeof payload.summary !== 'string' || !payload.summary.trim()) {
+    errors.push('`summary` must be a non-empty string.');
+  } else if (payload.summary.length > 1800) {
+    errors.push(`\`summary\` is ${payload.summary.length} chars; keep it under 1800.`);
+  }
+
+  if (payload.headline != null && typeof payload.headline !== 'string') {
+    errors.push('`headline`, if present, must be a string.');
+  }
+
+  return errors;
+}
+
 /** Spawn `claude -p`, write the ground-truth JSON to stdin, parse the envelope. */
 function runClaude(promptText, inputJson, { model, timeoutMs }) {
   return new Promise((resolve, reject) => {
@@ -180,6 +208,51 @@ function runClaude(promptText, inputJson, { model, timeoutMs }) {
     child.stdin.write(JSON.stringify(inputJson, null, 2));
     child.stdin.end();
   });
+}
+
+/**
+ * The attempt loop, shared by the daily and trip paths: run the prompt, parse,
+ * validate, and on a bad first result retry once with the validation errors fed
+ * back verbatim.
+ *
+ * Resolves to `{ parsed, model }` on success or `{ parsed: null, problem }` on
+ * exhaustion — never throws, which is what lets both callers keep their promise
+ * that a report row always lands.
+ */
+async function narrate({ promptPath, input, validate, model, timeoutMs }) {
+  const basePrompt = await readFile(promptPath, 'utf8');
+  let prompt = basePrompt;
+  let lastProblem = null;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const started = Date.now();
+      const { resultText, durationMs, costUsd } = await runClaude(prompt, input, { model, timeoutMs });
+
+      const parsed = extractJson(resultText);
+      const errors = validate(parsed);
+
+      if (!errors.length) {
+        console.log(`[synth] ok on attempt ${attempt} (${durationMs}ms, $${(costUsd ?? 0).toFixed(4)})`);
+        return {
+          parsed,
+          model: { name: model, duration_ms: durationMs ?? (Date.now() - started), cost_usd: costUsd },
+        };
+      }
+
+      lastProblem = errors.join(' ');
+      console.warn(`[synth] attempt ${attempt} produced invalid payload: ${lastProblem}`);
+    } catch (err) {
+      lastProblem = err.message;
+      console.warn(`[synth] attempt ${attempt} failed: ${err.message}`);
+    }
+
+    if (attempt === 1) {
+      prompt = `${basePrompt}\n\n## Your previous response was rejected\n\n${lastProblem}\n\nReturn corrected JSON only — no fences, no commentary. First character '{', last character '}'.`;
+    }
+  }
+
+  return { parsed: null, problem: lastProblem };
 }
 
 /** Deterministic prose from the score data. Never fails, never phones home. */
@@ -259,50 +332,92 @@ export async function synthesize(truth, {
     };
   }
 
-  const basePrompt = await readFile(PROMPT_PATH, 'utf8');
-  let prompt = basePrompt;
-  let lastProblem = null;
+  const { parsed, problem, model: modelInfo } = await narrate({
+    promptPath: PROMPT_PATH,
+    input: stdinPayload,
+    validate: validatePayload,
+    model,
+    timeoutMs,
+  });
 
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    try {
-      const started = Date.now();
-      const { resultText, durationMs, costUsd } = await runClaude(prompt, stdinPayload, { model, timeoutMs });
-
-      const parsed = extractJson(resultText);
-      const errors = validatePayload(parsed);
-
-      if (!errors.length) {
-        console.log(`[synth] ok on attempt ${attempt} (${durationMs}ms, $${(costUsd ?? 0).toFixed(4)})`);
-        return {
-          // Deterministic fields are re-asserted from ground truth: the model
-          // is asked to copy them through, but the score engine owns them and
-          // code is a better enforcer of that than a prompt is.
-          payload: {
-            ...truth,
-            summary: parsed.summary.trim(),
-            headline: typeof parsed.headline === 'string' ? parsed.headline.trim() : undefined,
-          },
-          source: 'claude',
-          model: { name: model, duration_ms: durationMs ?? (Date.now() - started), cost_usd: costUsd },
-        };
-      }
-
-      lastProblem = errors.join(' ');
-      console.warn(`[synth] attempt ${attempt} produced invalid payload: ${lastProblem}`);
-    } catch (err) {
-      lastProblem = err.message;
-      console.warn(`[synth] attempt ${attempt} failed: ${err.message}`);
-    }
-
-    if (attempt === 1) {
-      prompt = `${basePrompt}\n\n## Your previous response was rejected\n\n${lastProblem}\n\nReturn corrected JSON only — no fences, no commentary. First character '{', last character '}'.`;
-    }
+  if (!parsed) {
+    console.error(`[synth] falling back to deterministic summary after 2 attempts: ${problem}`);
+    return {
+      payload: fallbackPayload(truth),
+      source: 'fallback',
+      model: { name: model, duration_ms: 0, error: problem },
+    };
   }
 
-  console.error(`[synth] falling back to deterministic summary after 2 attempts: ${lastProblem}`);
   return {
-    payload: fallbackPayload(truth),
-    source: 'fallback',
-    model: { name: model, duration_ms: 0, error: lastProblem },
+    // Deterministic fields are re-asserted from ground truth: the model is
+    // asked to copy them through, but the score engine owns them and code is a
+    // better enforcer of that than a prompt is.
+    payload: {
+      ...truth,
+      summary: parsed.summary.trim(),
+      headline: typeof parsed.headline === 'string' ? parsed.headline.trim() : undefined,
+    },
+    source: 'claude',
+    model: modelInfo,
+  };
+}
+
+/**
+ * Same contract as synthesize(), for a trip's multi-day outlook: never throws,
+ * always resolves to a usable payload, reports honestly which one it is.
+ *
+ * The one structural difference is that the model contributes *only* prose
+ * here. `truth` carries the per-day scores, windows and mud straight through to
+ * the payload without ever being shown back to the model for echoing, so
+ * there's no verbatim-copy contract to enforce on the way out.
+ */
+export async function synthesizeTrip(truth, {
+  context = null,
+  model = DEFAULT_MODEL,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  mock = process.env.MOCK_SYNTH === '1',
+} = {}) {
+  const stdinPayload = context ? { ...truth, context } : truth;
+
+  if (mock) {
+    console.log('[synth] MOCK_SYNTH=1 — skipping the Claude CLI');
+    const base = tripFallbackSummary(truth);
+    return {
+      payload: {
+        ...base,
+        summary: `MOCK SYNTH — trip pipeline ran end to end without calling the Claude CLI. ${truth.days.length} day(s) scored, best ${truth.best_days[0] ?? 'n/a'}.`,
+        headline: 'Mock run — no LLM called',
+      },
+      source: 'fallback',
+      model: { name: 'mock', duration_ms: 0 },
+    };
+  }
+
+  const { parsed, problem, model: modelInfo } = await narrate({
+    promptPath: TRIP_PROMPT_PATH,
+    input: stdinPayload,
+    validate: validateTripPayload,
+    model,
+    timeoutMs,
+  });
+
+  if (!parsed) {
+    console.error(`[synth] trip falling back to deterministic summary after 2 attempts: ${problem}`);
+    return {
+      payload: tripFallbackSummary(truth),
+      source: 'fallback',
+      model: { name: model, duration_ms: 0, error: problem },
+    };
+  }
+
+  return {
+    payload: {
+      ...truth,
+      summary: parsed.summary.trim(),
+      headline: typeof parsed.headline === 'string' ? parsed.headline.trim() : undefined,
+    },
+    source: 'claude',
+    model: modelInfo,
   };
 }

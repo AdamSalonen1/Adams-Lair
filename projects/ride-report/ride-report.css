@@ -401,6 +401,31 @@
   font-style: italic;
 }
 
+/* Waiting on the Pi after a save. The pulse is the only thing on the card that
+   moves, so it reads as "working" without a spinner. */
+.trip-outlook.is-generating {
+  color: var(--ink-soft);
+  font-style: italic;
+  animation: trip-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes trip-pulse {
+  50% { opacity: 0.45; }
+}
+
+/* Someone who has asked not to see motion still needs to know it's working;
+   they just get the words without the pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .trip-outlook.is-generating { animation: none; }
+}
+
+.trip-best {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+}
+
 .trip-stamp {
   color: var(--ink-soft);
   font-size: 0.8rem;
