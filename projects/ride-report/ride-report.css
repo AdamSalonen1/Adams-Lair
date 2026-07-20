@@ -148,19 +148,22 @@
 #report-stamp-text:empty { display: none; }
 
 /* ===== Hourly strip ===== */
+/* All 24 hours always fit the width — the blocks shrink rather than the strip
+   scrolling, so its height stays put instead of jumping when a horizontal
+   scrollbar appears. The bottom padding is reserved for the hour ticks, which
+   hang below the blocks. */
 .hourly-strip {
   display: flex;
   gap: 3px;
-  overflow-x: auto;
-  padding: 4px 4px 10px;
+  padding: 4px 4px 24px;
   margin-bottom: 20px;
   border-radius: 10px;
 }
 
 .hour-block {
   position: relative;
-  flex: 1 0 18px;
-  min-width: 18px;
+  flex: 1 1 0;
+  min-width: 0;
   height: 56px;
   border-radius: 4px;
   opacity: 0.92;
@@ -530,11 +533,10 @@
   .outlook { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (min-width: 640px) {
-  .hour-block { flex-basis: 24px; }
-}
-
 @media (max-width: 420px) {
   /* Two date pickers side by side stop being tappable below this. */
   .field-row { grid-template-columns: 1fr; }
+
+  /* 23 gaps eat real width once the blocks are only ~9px each. */
+  .hourly-strip { gap: 2px; }
 }
