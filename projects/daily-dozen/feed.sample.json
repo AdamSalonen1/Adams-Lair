@@ -1,0 +1,20 @@
+{
+  "_note": "Phase-1 dev scaffolding, NOT a curated feed. These are real, oembed-verified video IDs so the player renders offline; Phase 3's worker replaces this with a real daily fetch and fills in view_count / duration_sec / published_at. If an embed here goes unavailable over time, that's the sample aging — the app's unavailable-item path is what handles it.",
+  "feed_date": "2026-07-20",
+  "generated_at": "2026-07-20T11:00:00Z",
+  "region": "US",
+  "items": [
+    { "video_id": "jNQXAC9IVRw", "title": "Me at the zoo", "channel_title": "jawed", "duration_sec": 19, "view_count": null, "published_at": null },
+    { "video_id": "1ePG9i7CGoQ", "title": "The Most Viewed YouTube Shorts of 2025 🤔", "channel_title": "hxsain", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "jA4hy-G396M", "title": "Counting down the most popular videos of 2025, here's number 3", "channel_title": "Forest Preserve District of Will County", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "Fi9rm8if1SM", "title": "Most Viewed YouTube Shorts of ALL TIME!", "channel_title": "MoreAliA", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "ppg26X0AU94", "title": "My most viewed video of 2025", "channel_title": "Sarah Hart | Freezer Meal Prep", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "3IjbQgijkLE", "title": "Our Most Viral Clips of 2025!", "channel_title": "DD Squad", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "Cx1P5qCVGJc", "title": "Most viral videos of 2025! #5", "channel_title": "AGuyAndAGolden", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "jIxKCn9QQ8o", "title": "Our MOST WATCHED video in 2025 with over 7M views 🏆", "channel_title": "Scout Campers", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "WCctDd2DDGI", "title": "Billions of Views: The 10 Most-Watched YouTube Videos of All Time", "channel_title": "TurboTop10", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "7u9qkjKmVl4", "title": "Viral shortsfeed compilation", "channel_title": "stardesenhos", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "T2h20yPuv3Q", "title": "Most Viewed YouTube Shorts! *VIRAL*", "channel_title": "Stay Wild Reacts", "duration_sec": null, "view_count": null, "published_at": null },
+    { "video_id": "gjtgoucqU7E", "title": "World's Most Viewed YouTube Shorts (Viral Clips)", "channel_title": "Affafy", "duration_sec": null, "view_count": null, "published_at": null }
+  ]
+}

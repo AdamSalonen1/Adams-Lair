@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Dozen — Adam's Lair</title>
+  <meta name="description" content="A finite, curated feed of a dozen trending YouTube Shorts a day. Watch the twelve and you're done — no infinite scroll, no autoplay, no rabbit hole.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="daily-dozen.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎞️</text></svg>">
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="wrap">
+      <a class="brand" href="../../index.html">Adam's <span class="flame">Lair</span></a>
+      <ul>
+        <li><a href="../../index.html">Home</a></li>
+        <li><a href="../../about.html">About</a></li>
+        <li><a href="../../projects.html" class="active">Projects</a></li>
+        <li><a href="../../contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="wrap dd-main">
+
+    <header class="dd-head">
+      <span class="kicker">Twelve and done</span>
+      <h1>Daily <span class="gradient">Dozen</span></h1>
+      <p class="dd-sub" id="dd-date">Today's dozen</p>
+    </header>
+
+    <div class="dd-progress" aria-hidden="false">
+      <div class="dd-progress-track">
+        <div class="dd-progress-bar" id="dd-progress-bar"></div>
+      </div>
+      <span class="dd-progress-count" id="dd-progress-count">0 of 12 watched</span>
+    </div>
+
+    <section class="dd-stage" id="dd-stage">
+      <div class="dd-player-col">
+        <div class="dd-player-frame">
+          <div id="player"></div>
+          <div class="dd-unavailable" id="dd-unavailable" hidden>
+            <p class="dd-unavailable-msg">This one's gone private or can't be embedded.</p>
+            <a class="dd-unavailable-link" id="dd-unavailable-link" href="#" target="_blank" rel="noopener">Watch on YouTube →</a>
+          </div>
+        </div>
+
+        <div class="dd-now">
+          <p class="dd-now-title" id="dd-now-title"></p>
+          <p class="dd-now-channel" id="dd-now-channel"></p>
+          <button class="dd-advance" id="dd-advance" type="button">Skip →</button>
+        </div>
+      </div>
+
+      <aside class="dd-uplist">
+        <h2 class="dd-uplist-title">The dozen</h2>
+        <ol class="dd-list" id="dd-list"></ol>
+      </aside>
+    </section>
+
+    <section class="dd-end" id="dd-end" hidden>
+      <div class="dd-card-inner">
+        <span class="dd-end-check" aria-hidden="true">✓</span>
+        <h2>That's the dozen.</h2>
+        <p>You're caught up — there's no more feed today. That's the whole idea.</p>
+        <p class="dd-end-next">Next dozen in <span id="dd-countdown" class="dd-countdown">–</span></p>
+      </div>
+    </section>
+
+    <section class="dd-empty" id="dd-empty" hidden>
+      <div class="dd-card-inner">
+        <span class="dd-end-check dd-end-check--wait" aria-hidden="true">⏳</span>
+        <h2>Today's dozen isn't up yet.</h2>
+        <p>The feed is gathered fresh each morning. Check back in a little while.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Adam Salonen · Adam's Lair</span>
+      <span>Built with an unreasonable amount of orange 🧡</span>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
