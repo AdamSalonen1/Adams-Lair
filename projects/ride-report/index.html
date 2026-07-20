@@ -85,15 +85,18 @@
       </div>
 
       <form class="trip-form" id="trip-form" hidden>
-        <label>Title
-          <input type="text" id="trip-title" maxlength="120" required
-                 placeholder="Black Hills weekend">
-        </label>
-
-        <label>Location
-          <input type="text" id="trip-location" maxlength="120" required
-                 placeholder="Rapid City, SD">
-        </label>
+        <div class="place-field">
+          <label for="trip-place">Place</label>
+          <div class="place-input-wrap">
+            <input type="text" id="trip-place" maxlength="120" required
+                   placeholder="Rapid City" autocomplete="off"
+                   role="combobox" aria-autocomplete="list" aria-expanded="false"
+                   aria-controls="trip-place-results">
+            <ul class="place-results" id="trip-place-results" role="listbox"
+                aria-label="Matching places" hidden></ul>
+          </div>
+          <p class="place-hint" id="trip-place-hint" hidden></p>
+        </div>
 
         <div class="field-row">
           <label>Start
@@ -104,16 +107,23 @@
           </label>
         </div>
 
-        <div class="field-row">
-          <label>Latitude
-            <input type="number" id="trip-lat" step="any" min="-90" max="90"
-                   inputmode="decimal" required>
-          </label>
-          <label>Longitude
-            <input type="number" id="trip-lon" step="any" min="-180" max="180"
-                   inputmode="decimal" required>
-          </label>
-        </div>
+        <!-- `required` deliberately omitted: a required-but-empty control inside
+             a collapsed <details> is unfocusable, and the browser aborts the
+             submit without ever showing a message. readCoordinate() in trips.js
+             validates these, and opens this panel when it complains. -->
+        <details class="coord-details" id="trip-coords">
+          <summary>Coordinates</summary>
+          <div class="field-row">
+            <label>Latitude
+              <input type="number" id="trip-lat" step="any" min="-90" max="90"
+                     inputmode="decimal">
+            </label>
+            <label>Longitude
+              <input type="number" id="trip-lon" step="any" min="-180" max="180"
+                     inputmode="decimal">
+            </label>
+          </div>
+        </details>
 
         <label>Notes
           <textarea id="trip-notes" rows="2" maxlength="500"

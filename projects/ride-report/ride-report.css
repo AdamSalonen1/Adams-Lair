@@ -359,6 +359,71 @@
   gap: 12px;
 }
 
+/* ===== Place search ===== */
+.place-field { display: grid; gap: 6px; }
+
+/* The anchor the results list hangs from. Without it the list would position
+   against the form and cover the date fields. */
+.place-input-wrap { position: relative; }
+
+.place-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 260px;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+}
+
+.place-result {
+  padding: 11px 13px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--orange-soft);
+}
+
+.place-result:last-child { border-bottom: none; }
+
+/* Hover and keyboard highlight share one look — the pointer and the arrow keys
+   are pointing at the same thing, so they should not disagree on screen. */
+.place-result:hover,
+.place-result.is-active {
+  background: var(--paper);
+  color: var(--orange-deep);
+}
+
+.place-hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+.place-hint.is-error { color: var(--red-deep); font-weight: 600; }
+
+/* ===== Coordinates (manual fallback) ===== */
+.coord-details > summary {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 4px 0;
+  list-style-position: inside;
+}
+
+.coord-details > summary:hover { color: var(--orange-deep); }
+
+.coord-details[open] > summary { margin-bottom: 10px; }
+
 .form-error {
   color: var(--red-deep);
   font-size: 0.9rem;

@@ -20,8 +20,13 @@ import {
   updateTrip,
   deleteTrip,
 } from './supabase.js';
+import { searchPlaces } from './geocode.js';
 
-const HOME = { location_name: 'Fargo, ND', lat: 46.8772, lon: -96.7898 };
+const HOME = { label: 'Fargo, North Dakota, United States', lat: 46.8772, lon: -96.7898 };
+
+// Long enough that a typed word settles before we ask, short enough that the
+// list feels attached to the keyboard.
+const SEARCH_DEBOUNCE_MS = 300;
 
 // How long to wait for the Pi after a save. The listener debounces ~5s, then a
 // synthesis run is tens of seconds on a Pi; 90s covers that with room, and if
@@ -49,6 +54,18 @@ const stalled = new Map();
 // Latest reports from the most recent refresh, so a save knows which stamp it
 // is waiting to see replaced without an extra round trip to ask.
 let lastReports = new Map();
+
+// ===== Place search state =====
+let searchTimer = null;
+let searchAbort = null;
+let placeResults = [];
+let activeResult = -1;
+// The place text that the current lat/lon were vouched for — by picking a
+// result, by typing coordinates by hand, or by having been saved that way. Guards
+// the trap this whole feature otherwise opens: pick "Rapid City", then retype
+// "Fargo" without picking, and the trip would save Fargo's name against Rapid
+// City's coordinates and forecast the wrong state forever.
+let vouchedFor = null;
 
 function byId(id) {
   return document.getElementById(id);
@@ -120,7 +137,11 @@ function tripCard(trip, report) {
 
   const meta = document.createElement('p');
   meta.className = 'trip-meta';
-  meta.textContent = `${trip.location_name} · ${formatRange(trip.start_date, trip.end_date)}`;
+  // The heading is the place now, so naming it again here would only stutter.
+  // Older trips saved before the merge can still differ — show those.
+  meta.textContent = trip.location_name && trip.location_name !== trip.title
+    ? `${trip.location_name} · ${formatRange(trip.start_date, trip.end_date)}`
+    : formatRange(trip.start_date, trip.end_date);
 
   li.append(head, meta);
 
@@ -271,29 +292,177 @@ function startWatch(tripId) {
   watchOutlook(tripId, token);
 }
 
+// ===== Place search =====
+
+function closeResults() {
+  placeResults = [];
+  activeResult = -1;
+  el.tripPlaceResults.replaceChildren();
+  show(el.tripPlaceResults, false);
+  el.tripPlace.setAttribute('aria-expanded', 'false');
+  el.tripPlace.removeAttribute('aria-activedescendant');
+}
+
+/** Cancel any pending search and drop the list. Used on close and on pick. */
+function resetSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = null;
+  searchAbort?.abort();
+  searchAbort = null;
+  closeResults();
+}
+
+function highlightResult(index) {
+  activeResult = index;
+  [...el.tripPlaceResults.children].forEach((node, i) => {
+    const isActive = i === index;
+    node.classList.toggle('is-active', isActive);
+    node.setAttribute('aria-selected', String(isActive));
+  });
+
+  if (index < 0) {
+    el.tripPlace.removeAttribute('aria-activedescendant');
+    return;
+  }
+  const active = el.tripPlaceResults.children[index];
+  el.tripPlace.setAttribute('aria-activedescendant', active.id);
+  active.scrollIntoView({ block: 'nearest' });
+}
+
+/** Adopt a result: its label becomes the trip's name, its coordinates the target. */
+function choosePlace(place) {
+  el.tripPlace.value = place.label;
+  el.tripLat.value = place.lat;
+  el.tripLon.value = place.lon;
+  vouchedFor = place.label;
+
+  resetSearch();
+  setMessage(el.tripPlaceHint, `${place.lat.toFixed(4)}, ${place.lon.toFixed(4)}`);
+  el.tripPlace.focus();
+}
+
+function renderResults(places) {
+  placeResults = places;
+  activeResult = -1;
+
+  const options = places.map((place, i) => {
+    const li = document.createElement('li');
+    li.id = `trip-place-opt-${place.key}`;
+    li.className = 'place-result';
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', 'false');
+    li.textContent = place.label;
+    // mousedown, not click: the input's blur fires first on a click and would
+    // tear the list down before the click ever reached this handler.
+    li.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      choosePlace(place);
+    });
+    return li;
+  });
+
+  el.tripPlaceResults.replaceChildren(...options);
+  show(el.tripPlaceResults, options.length > 0);
+  el.tripPlace.setAttribute('aria-expanded', String(options.length > 0));
+}
+
+async function runSearch(query) {
+  // Supersede whatever is in flight, so a slow early request can't land after a
+  // fast later one and repopulate the list with results for a stale prefix.
+  searchAbort?.abort();
+  const controller = new AbortController();
+  searchAbort = controller;
+
+  try {
+    const places = await searchPlaces(query, { signal: controller.signal });
+    if (controller.signal.aborted) return;
+
+    renderResults(places);
+    setMessage(el.tripPlaceHint, places.length ? '' : `No place matches “${query}”.`);
+  } catch (err) {
+    if (controller.signal.aborted || err.name === 'AbortError') return;
+    console.warn('Ride Report: place search failed.', err);
+    closeResults();
+    setMessage(el.tripPlaceHint, 'Place search is unreachable — set coordinates manually below.', true);
+    el.tripCoords.open = true;
+  }
+}
+
+function handlePlaceInput() {
+  clearTimeout(searchTimer);
+  const query = el.tripPlace.value.trim();
+
+  // Typing past a pick leaves the confirmed coordinates on screen next to a name
+  // they no longer describe. Drop the readout the moment the two diverge.
+  if (query !== vouchedFor) setMessage(el.tripPlaceHint, '');
+
+  if (query.length < 2) {
+    resetSearch();
+    return;
+  }
+
+  searchTimer = setTimeout(() => runSearch(query), SEARCH_DEBOUNCE_MS);
+}
+
+function handlePlaceKeydown(event) {
+  if (event.key === 'Escape' && placeResults.length) {
+    // Stop here so a stray Escape closes only the list, never the whole form.
+    event.preventDefault();
+    closeResults();
+    return;
+  }
+
+  if (event.key === 'Enter' && activeResult >= 0) {
+    // The form would otherwise submit on the same keystroke that picks.
+    event.preventDefault();
+    choosePlace(placeResults[activeResult]);
+    return;
+  }
+
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+  if (!placeResults.length) return;
+
+  event.preventDefault();
+  const step = event.key === 'ArrowDown' ? 1 : -1;
+  const count = placeResults.length;
+  // +count before the modulo: ArrowUp from the top would otherwise land on -1.
+  highlightResult((activeResult + step + count) % count);
+}
+
 // ===== Trip form =====
 
 function openForm(trip = null) {
   editingId = trip?.id ?? null;
 
-  el.tripTitle.value = trip?.title ?? '';
-  el.tripLocation.value = trip?.location_name ?? HOME.location_name;
+  el.tripPlace.value = trip?.title ?? HOME.label;
   el.tripLat.value = trip?.lat ?? HOME.lat;
   el.tripLon.value = trip?.lon ?? HOME.lon;
   el.tripStart.value = trip?.start_date ?? '';
   el.tripEnd.value = trip?.end_date ?? '';
   el.tripNotes.value = trip?.notes ?? '';
 
+  // Whatever was loaded is a name and coordinates that already belong together,
+  // so it starts vouched for — editing only the dates must not demand a re-pick.
+  vouchedFor = el.tripPlace.value;
+
+  resetSearch();
+  setMessage(el.tripPlaceHint, '');
+  el.tripCoords.open = false;
   setMessage(el.tripError, '');
   show(el.tripDelete, Boolean(trip));
   show(el.tripForm, true);
   show(el.tripAdd, false);
-  el.tripTitle.focus();
+  el.tripPlace.focus();
+  el.tripPlace.select();
 }
 
 function closeForm() {
   editingId = null;
   el.tripForm.reset();
+  resetSearch();
+  vouchedFor = null;
+  setMessage(el.tripPlaceHint, '');
+  el.tripCoords.open = false;
   setMessage(el.tripError, '');
   show(el.tripForm, false);
   show(el.tripAdd, true);
@@ -319,14 +488,27 @@ function readCoordinate(input, name, limit) {
 }
 
 function readForm() {
+  const place = el.tripPlace.value.trim();
+  if (!place) return { error: 'Give the trip a place.' };
+
+  // A name that no longer matches its coordinates is worse than a missing one:
+  // it saves and forecasts happily, just somewhere else.
+  if (place !== vouchedFor) {
+    return {
+      error: 'Pick a place from the list, or open Coordinates and set them yourself.',
+    };
+  }
+
   const lat = readCoordinate(el.tripLat, 'Latitude', 90);
-  if (lat.error) return { error: lat.error };
+  if (lat.error) return { error: lat.error, revealCoords: true };
   const lon = readCoordinate(el.tripLon, 'Longitude', 180);
-  if (lon.error) return { error: lon.error };
+  if (lon.error) return { error: lon.error, revealCoords: true };
 
   const fields = {
-    title: el.tripTitle.value.trim(),
-    location_name: el.tripLocation.value.trim(),
+    // One field feeds both columns. They are the same thing for this app's
+    // purposes, and the worker reads each of them independently.
+    title: place,
+    location_name: place,
     lat: lat.value,
     lon: lon.value,
     start_date: el.tripStart.value,
@@ -334,7 +516,6 @@ function readForm() {
     notes: el.tripNotes.value.trim() || null,
   };
 
-  if (!fields.title) return { error: 'Give the trip a title.' };
   if (!fields.start_date || !fields.end_date) return { error: 'Both dates are required.' };
   // ISO dates compare correctly as strings, and the same rule is enforced by a
   // CHECK constraint — this exists to say so in English before the round trip.
@@ -346,8 +527,10 @@ function readForm() {
 async function handleSubmit(event) {
   event.preventDefault();
 
-  const { fields, error } = readForm();
+  const { fields, error, revealCoords } = readForm();
   if (error) {
+    // Complaining about a field folded away behind a summary is a dead end.
+    if (revealCoords) el.tripCoords.open = true;
     setMessage(el.tripError, error, true);
     return;
   }
@@ -457,8 +640,10 @@ export function initTripsUi() {
     tripsEmpty: byId('trips-empty'),
     tripAdd: byId('trip-add'),
     tripForm: byId('trip-form'),
-    tripTitle: byId('trip-title'),
-    tripLocation: byId('trip-location'),
+    tripPlace: byId('trip-place'),
+    tripPlaceResults: byId('trip-place-results'),
+    tripPlaceHint: byId('trip-place-hint'),
+    tripCoords: byId('trip-coords'),
     tripLat: byId('trip-lat'),
     tripLon: byId('trip-lon'),
     tripStart: byId('trip-start'),
@@ -484,6 +669,24 @@ export function initTripsUi() {
   el.tripCancel.addEventListener('click', closeForm);
   el.tripDelete.addEventListener('click', handleDelete);
   el.tripForm.addEventListener('submit', handleSubmit);
+
+  el.tripPlace.addEventListener('input', handlePlaceInput);
+  el.tripPlace.addEventListener('keydown', handlePlaceKeydown);
+  // resetSearch, not closeResults: a debounced search still pending when focus
+  // leaves would otherwise fire and pop the list open under a field the user
+  // has already tabbed away from.
+  el.tripPlace.addEventListener('blur', resetSearch);
+
+  // Typing coordinates by hand is the escape hatch for anywhere the gazetteer
+  // has no name for — a trailhead, a campsite. Doing it vouches for whatever
+  // place name is in the box, which is what keeps the submit check from
+  // insisting on a pick that could never succeed.
+  const vouchByHand = () => {
+    vouchedFor = el.tripPlace.value.trim();
+    setMessage(el.tripPlaceHint, '');
+  };
+  el.tripLat.addEventListener('input', vouchByHand);
+  el.tripLon.addEventListener('input', vouchByHand);
 
   el.authOpen.addEventListener('click', () => {
     setMessage(el.authMsg, '');
