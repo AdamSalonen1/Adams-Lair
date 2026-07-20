@@ -221,7 +221,25 @@ export function scoreReport(hours, daily, options = {}) {
     return {
       date: d.date,
       dayScore,
-      hourly: dayHours.map(({ t, score, limiting, daylight }) => ({ t, score, limiting, daylight })),
+      // Carries the per-factor components and the raw measurements behind them,
+      // not just the verdict: "62, held back by wind" is only useful next to the
+      // 18mph that caused it. Consumers that want the narrow shape pick fields
+      // off this rather than getting it pre-trimmed.
+      hourly: dayHours.map((h) => ({
+        t: h.t,
+        score: h.score,
+        limiting: h.limiting,
+        daylight: h.daylight,
+        components: h.components,
+        apparentTemp: h.apparentTemp,
+        temp: h.temp,
+        windSpeed: h.windSpeed,
+        windGust: h.windGust,
+        windDirection: h.windDirection,
+        precipProbability: h.precipProbability,
+        precipitation: h.precipitation,
+        aqi: h.aqi,
+      })),
       windows: findWindows(dayHours, { minLength: minWindowLength, threshold }),
     };
   });

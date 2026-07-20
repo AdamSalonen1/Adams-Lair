@@ -19,6 +19,50 @@ const LIMITING_LABELS = {
   aqi: 'air quality',
 };
 
+// One row per scoring factor, in the order score.js computes them. `value`
+// renders the measurement the reader can check against their own window;
+// `scale` explains the curve, and is shown only for the factor that set the
+// score — the rest of the time it is noise.
+const FACTOR_META = {
+  temp: {
+    label: 'Temperature',
+    value: (h) => (h.apparentTemp == null ? null : `feels like ${Math.round(h.apparentTemp)}°F`),
+    scale: 'Ideal 55–75°F, falling off to either side.',
+  },
+  wind: {
+    label: 'Wind',
+    value: (h) => (h.windSpeed == null
+      ? null
+      : `${Math.round(h.windSpeed)} mph${h.windDirection == null ? '' : ` from the ${compassPoint(h.windDirection)}`}`),
+    scale: 'Free below 10 mph, down to zero by 25.',
+  },
+  gust: {
+    label: 'Gusts',
+    value: (h) => (h.windGust == null ? null : `${Math.round(h.windGust)} mph`),
+    scale: 'Free below 20 mph, down to zero by 40.',
+  },
+  precip: {
+    label: 'Precipitation',
+    value: (h) => {
+      if (h.precipitation != null && h.precipitation > 0) return `${h.precipitation}" falling`;
+      return h.precipProbability == null ? null : `${Math.round(h.precipProbability)}% chance`;
+    },
+    scale: 'Free below 20% chance, zero by 70% — measurable rain scores 5 outright.',
+  },
+  aqi: {
+    label: 'Air quality',
+    value: (h) => (h.aqi == null ? null : `AQI ${Math.round(h.aqi)}`),
+    scale: 'Free below AQI 50, down to zero by 150.',
+  },
+};
+
+const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
+  'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+
+function compassPoint(degrees) {
+  return COMPASS[Math.round(degrees / 22.5) % 16];
+}
+
 const MUD_META = {
   dry: { icon: '☀️', label: 'Dry — trails good' },
   damp: { icon: '💧', label: 'Damp — expect soft spots' },
@@ -106,20 +150,159 @@ function showError() {
   document.getElementById('ride-error').hidden = false;
 }
 
-function renderHourlyStrip(todayDay) {
+/**
+ * The breakdown behind one hour's score.
+ *
+ * The score is the *worst* component, not a blend, so the panel is sorted
+ * ascending and the top row is the answer to "why this number" — everything
+ * below it is context for how much headroom the other factors had. Saying that
+ * out loud beats a bar chart the reader has to infer the rule from.
+ */
+function renderHourDetail(hour) {
+  const panel = document.getElementById('hour-detail');
+  panel.innerHTML = '';
+
+  const head = document.createElement('div');
+  head.className = 'hour-detail-head';
+
+  const when = document.createElement('p');
+  when.className = 'hour-detail-when';
+  when.textContent = formatHourLabel(hour.t) + (hour.daylight === false ? ' · after dark' : '');
+
+  const num = document.createElement('p');
+  num.className = 'hour-detail-score';
+  num.textContent = hour.score != null ? hour.score : '—';
+  num.style.color = scoreColor(hour.score);
+
+  head.append(when, num);
+  panel.appendChild(head);
+
+  const components = hour.components || {};
+
+  // `limiting` is an argmin, so score.js still names a factor when all five tie
+  // at 100 — reporting that as "held back by temperature" on a perfect hour
+  // would be a lie about a number the reader can see is maxed. A factor only
+  // counts as holding the hour back if it actually cost it something.
+  const limiting = hour.limiting
+    && Math.round(components[hour.limiting] ?? 0) < 100
+    ? hour.limiting
+    : null;
+
+  const why = document.createElement('p');
+  why.className = 'hour-detail-why';
+  if (hour.score == null) {
+    why.textContent = 'No forecast data for this hour.';
+  } else if (limiting) {
+    why.textContent = `Held back by ${LIMITING_LABELS[limiting]} — the lowest-scoring factor sets the hour.`;
+  } else {
+    why.textContent = 'Nothing is holding this hour back — every factor is maxed.';
+  }
+  panel.appendChild(why);
+
+  const rows = Object.keys(FACTOR_META)
+    .map((key) => ({ key, meta: FACTOR_META[key], component: components[key] ?? null }))
+    // Missing factors sink to the bottom: they explain nothing, and floating a
+    // null above a real 40 would imply it mattered more.
+    .sort((a, b) => (a.component ?? Infinity) - (b.component ?? Infinity));
+
+  const list = document.createElement('ul');
+  list.className = 'factor-list';
+
+  for (const { key, meta, component } of rows) {
+    const item = document.createElement('li');
+    item.className = 'factor' + (key === limiting ? ' factor--limiting' : '');
+
+    const name = document.createElement('span');
+    name.className = 'factor-name';
+    name.textContent = meta.label;
+
+    const value = document.createElement('span');
+    value.className = 'factor-value';
+    value.textContent = meta.value(hour) ?? 'no data';
+
+    const bar = document.createElement('span');
+    bar.className = 'factor-bar';
+    if (component != null) {
+      const fill = document.createElement('span');
+      fill.className = 'factor-fill';
+      fill.style.width = `${Math.round(component)}%`;
+      fill.style.background = scoreColor(component);
+      bar.appendChild(fill);
+    }
+
+    const points = document.createElement('span');
+    points.className = 'factor-points';
+    points.textContent = component != null ? Math.round(component) : '—';
+
+    item.append(name, value, bar, points);
+
+    if (key === limiting) {
+      const note = document.createElement('span');
+      note.className = 'factor-note';
+      note.textContent = meta.scale;
+      item.appendChild(note);
+    }
+
+    list.appendChild(item);
+  }
+
+  panel.appendChild(list);
+  panel.hidden = false;
+}
+
+function renderHourlyStrip(todayDay, nowStr) {
   const el = document.getElementById('hourly-strip');
+  const panel = document.getElementById('hour-detail');
   el.innerHTML = '';
+  panel.hidden = true;
+  let selected = null;
+  let currentBlock = null;
+  let currentHour = null;
+
+  const select = (block, hour) => {
+    // Clicking the open hour again closes the panel, so the strip can be put
+    // back the way it was found.
+    if (selected === block) {
+      block.setAttribute('aria-expanded', 'false');
+      block.classList.remove('is-selected');
+      panel.hidden = true;
+      selected = null;
+      return;
+    }
+    if (selected) {
+      selected.setAttribute('aria-expanded', 'false');
+      selected.classList.remove('is-selected');
+    }
+    block.setAttribute('aria-expanded', 'true');
+    block.classList.add('is-selected');
+    selected = block;
+    renderHourDetail(hour);
+  };
+
   todayDay.hourly.forEach((h, i) => {
-    const block = document.createElement('div');
+    const block = document.createElement('button');
+    block.type = 'button';
     block.className = 'hour-block' + (h.daylight === false ? ' hour-block--night' : '');
     block.style.background = scoreColor(h.score);
+    block.setAttribute('aria-controls', 'hour-detail');
+    block.setAttribute('aria-expanded', 'false');
 
     const label = formatHourLabel(h.t);
     const detail = h.score != null
       ? `${label} — ${h.score}${h.limiting ? `, held back by ${LIMITING_LABELS[h.limiting]}` : ''}`
       : `${label} — no data`;
-    block.title = detail;
+    block.title = `${detail}. Click for the breakdown.`;
     block.setAttribute('aria-label', detail);
+
+    block.addEventListener('click', () => select(block, h));
+
+    // Compared to the hour, not the minute: "2026-07-20T14" is the block that
+    // contains right now.
+    if (nowStr && h.t.slice(0, 13) === nowStr.slice(0, 13)) {
+      block.classList.add('hour-block--now');
+      currentBlock = block;
+      currentHour = h;
+    }
 
     if (i % 3 === 0) {
       const tick = document.createElement('span');
@@ -129,6 +312,16 @@ function renderHourlyStrip(todayDay) {
     }
     el.appendChild(block);
   });
+
+  // Open on the current hour, so the page answers "what's it like right now"
+  // without a click. select() rather than click() — a programmatic click would
+  // be indistinguishable from the reader's own, and this must not take focus
+  // away from the top of the page on load.
+  //
+  // No match means the strip is not showing today at all (the report fell
+  // through to a future day), and there is no "now" to open — the panel stays
+  // closed rather than opening an arbitrary hour.
+  if (currentBlock) select(currentBlock, currentHour);
 }
 
 function renderMud(mud) {
@@ -225,7 +418,8 @@ function renderReportMeta(row, status) {
   document.getElementById('report-stamp').hidden = false;
 }
 
-function render(report, todayDateStr) {
+function render(report, nowStr) {
+  const todayDateStr = nowStr.slice(0, 10);
   const today = report.days.find((d) => d.date === todayDateStr)
     || report.days.find((d) => d.date > todayDateStr);
   if (!today) { showError(); return; }
@@ -256,7 +450,7 @@ function render(report, todayDateStr) {
     windowEl.textContent = 'No solid window today.';
   }
 
-  renderHourlyStrip(today);
+  renderHourlyStrip(today, nowStr);
   renderMud(report.mud);
   renderOutlook(report.days, todayDateStr);
 
@@ -291,7 +485,7 @@ async function init() {
     const { hours, daily } = await fetchWeather(LOCATION);
     const nowStr = nowStrInZone(LOCATION.timezone);
     const report = scoreReport(hours, daily, { nowStr });
-    render(report, nowStr.slice(0, 10));
+    render(report, nowStr);
     rendered = true;
   } catch (err) {
     console.error('Ride Report failed to load:', err);

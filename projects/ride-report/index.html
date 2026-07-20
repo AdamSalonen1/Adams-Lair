@@ -63,6 +63,11 @@
 
       <div class="hourly-strip" id="hourly-strip" aria-label="Hourly rideability for today"></div>
 
+      <!-- Filled in by the strip on click. Stays out of the flow until then, so
+           an untouched page looks exactly as it did before. -->
+      <div class="hour-detail" id="hour-detail" role="region"
+           aria-label="Score breakdown for the selected hour" hidden></div>
+
       <div class="mud-badge" id="mud-badge">
         <span class="mud-icon" id="mud-icon"></span>
         <div>

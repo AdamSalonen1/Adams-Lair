@@ -160,17 +160,56 @@
   border-radius: 10px;
 }
 
+/* A <button>, so it is tabbable and announces itself — hence the reset. The
+   blocks are ~14px wide and cannot meet a 44px touch target without becoming a
+   different component; the tap area is the full 56px height, and every hour is
+   also reachable from the keyboard. */
 .hour-block {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
   height: 56px;
+  padding: 0;
+  border: none;
   border-radius: 4px;
+  font: inherit;
   opacity: 0.92;
-  cursor: default;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.hour-block:hover { opacity: 1; transform: translateY(-2px); }
+
+.hour-block:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Reaches past the 3px gap so the marker is legible at block width. */
+.hour-block.is-selected {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink);
+}
+
+/* A caret over the hour containing right now. The page opens with this hour
+   selected, but the selection ring follows the reader's clicks — this stays put
+   so "now" is still findable after they have poked at the evening. */
+.hour-block--now::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--ink-soft);
 }
 
 .hour-block--night { opacity: 0.35; }
+
+.hour-block--night:hover,
+.hour-block--night.is-selected { opacity: 0.6; }
 
 .hour-block-label {
   position: absolute;
@@ -180,6 +219,92 @@
   font-size: 0.65rem;
   color: var(--ink-soft);
   white-space: nowrap;
+}
+
+/* ===== Hour detail (the breakdown behind one block) ===== */
+.hour-detail {
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.hour-detail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hour-detail-when {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hour-detail-score {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hour-detail-why {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  margin-top: 2px;
+}
+
+.factor-list {
+  list-style: none;
+  margin-top: 12px;
+  border-top: 1px solid var(--orange-soft);
+}
+
+.factor {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 4.5rem 2rem;
+  align-items: center;
+  gap: 2px 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--orange-soft);
+  font-size: 0.88rem;
+}
+
+.factor:last-child { border-bottom: none; }
+
+/* The row that actually set the score, pulled forward — it is the answer, and
+   the other four are only there to show what it beat. */
+.factor--limiting .factor-name,
+.factor--limiting .factor-points { font-weight: 800; color: var(--orange-deep); }
+
+.factor-name { font-weight: 600; }
+
+.factor-value { color: var(--ink-soft); }
+
+.factor-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--orange-soft);
+  overflow: hidden;
+}
+
+.factor-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.factor-points {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.factor-note {
+  grid-column: 1 / -1;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  text-wrap: pretty;
 }
 
 /* ===== Mud badge ===== */
@@ -604,4 +729,13 @@
 
   /* 23 gaps eat real width once the blocks are only ~9px each. */
   .hourly-strip { gap: 2px; }
+
+  /* Four columns leave the value column too narrow to hold "18 mph from the
+     WNW" on one line. Stack instead, keeping the label and its points paired on
+     the first row so the row still reads as one factor. */
+  .factor { grid-template-columns: minmax(0, 1fr) 2rem; }
+  .factor-name { grid-column: 1; grid-row: 1; }
+  .factor-points { grid-column: 2; grid-row: 1; }
+  .factor-value { grid-column: 1 / -1; grid-row: 2; }
+  .factor-bar { grid-column: 1 / -1; grid-row: 3; margin-top: 4px; }
 }
