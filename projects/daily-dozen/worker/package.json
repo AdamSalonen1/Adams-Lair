@@ -1,0 +1,15 @@
+{
+  "name": "daily-dozen-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "search.list -> videos.list -> filter/rank -> Supabase upsert. Runs on a systemd timer on the Pi.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node run-daily.js",
+    "mock": "MOCK_YOUTUBE=1 node run-daily.js",
+    "test": "node test-youtube.js"
+  }
+}

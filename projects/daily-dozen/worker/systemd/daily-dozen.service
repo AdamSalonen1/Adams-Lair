@@ -1,0 +1,47 @@
+[Unit]
+Description=Daily Dozen — fetch today's trending Shorts and upsert the feed
+Documentation=https://github.com/AdamSalonen1/Adams-Lair
+# The run's first act is an HTTPS fetch; without this it races DHCP on boot and
+# burns its retries before the link is up.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=adams
+Group=adams
+WorkingDirectory=/home/adams/projects/Adams-Lair/projects/daily-dozen/worker
+EnvironmentFile=/home/adams/projects/Adams-Lair/projects/daily-dozen/worker/.env
+Environment=NODE_ENV=production
+
+# Its own lock file, separate from Ride Report's — the two workers share a
+# Supabase project but never a lock. `-n` (skip if held), not Ride Report's
+# `-w` (wait): Ride Report waits because its Realtime listener holds the lock to
+# write a *trip*, so a skipped tick would strand the daily report. Daily Dozen
+# has no listener — the only thing that could ever hold this lock is another
+# daily run writing the very same feed, so declining is exactly right.
+#
+# -E 75 makes "already running" exit 75 (EX_TEMPFAIL) instead of flock's default
+# 1, keeping it distinguishable from the worker's own exit 1 (nothing written).
+# Paired with SuccessExitStatus below, that skip stays green.
+ExecStart=/usr/bin/flock -n -E 75 /run/lock/daily-dozen.lock /usr/bin/node run-daily.js
+
+# Two HTTPS calls and a DB write — tens of seconds on a Pi, with headroom for a
+# retry on a bad network. No Claude call here (unlike Ride Report), so no need
+# for its 30-minute budget.
+TimeoutStartSec=600
+Nice=10
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=daily-dozen
+
+# 0 = fresh dozen, 1 = nothing written, 2 = degraded (thin day), 75 = skipped.
+# 2 is intentionally NOT success — the row landed and the page stays useful, but
+# a persistent shortfall should show red in `systemctl status`, not hide behind a
+# green check. 75 IS success: declining to run because a run is already in flight
+# is correct behaviour, not a fault.
+SuccessExitStatus=0 75

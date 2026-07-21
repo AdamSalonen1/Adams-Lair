@@ -1,0 +1,22 @@
+[Unit]
+Description=Daily Dozen — fetch trending Shorts once each morning
+Documentation=https://github.com/AdamSalonen1/Adams-Lair
+
+[Timer]
+# 06:30 Central. Trends don't turn over fast enough to justify more than once a
+# day, and the whole point is one sitting per day. The timezone is named
+# explicitly so the schedule is right regardless of the Pi's local TZ.
+OnCalendar=*-*-* 06:30:00 America/Chicago
+
+# Catch up one missed run after downtime, so a Pi that was off overnight has a
+# current dozen shortly after boot instead of waiting for tomorrow morning.
+Persistent=true
+
+# Don't hammer the YouTube API exactly on the minute.
+RandomizedDelaySec=300
+AccuracySec=1min
+
+Unit=daily-dozen.service
+
+[Install]
+WantedBy=timers.target
