@@ -29,8 +29,18 @@ export function loadConfig(env = process.env) {
     // '#shorts' anchors to short-form content; the velocity rank does the real
     // curation afterward.
     searchQuery: env.SEARCH_QUERY || '#shorts',
+    // Drop videos that aren't for an English-speaking (American) audience. This
+    // is the knob that keeps globally-viral Hindi/CJK/etc. Shorts off the page:
+    // regionCode/relevanceLanguage on search.list are only *biases*, so the hard
+    // gate lives in the filter (see filterReason). Set REQUIRE_LATIN_TITLE=0 to
+    // turn off the script heuristic when building a deliberately non-Latin feed.
+    requireLatinTitle: env.REQUIRE_LATIN_TITLE !== '0' && env.REQUIRE_LATIN_TITLE !== 'false',
     maxDurationSec: num(env.MAX_DURATION_SEC, 60),
     dozenSize: num(env.DOZEN_SIZE, 12),
+    // Pages of search.list to pull (50 candidates each, 100 quota units each).
+    // The English filter can cut a global page of 50 down hard, so a second page
+    // keeps the dozen from going thin. Bump it if the filter gets stricter.
+    searchPages: num(env.SEARCH_PAGES, 2),
     publishedWithinHours: num(env.PUBLISHED_WITHIN_HOURS, 48),
     retentionDays: num(env.RETENTION_DAYS, 14),
     // search.list caps at 50, and 50 candidates for a dozen is plenty of slack

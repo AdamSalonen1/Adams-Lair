@@ -1,9 +1,13 @@
 // Daily Dozen — discovery. The only file that talks to the YouTube Data API.
 //
-// Two calls, then a filter and a rank:
-//   1. search.list  — recent + high-view short-form candidates (100 quota units)
+// A search, a hydrate, then a filter and a rank:
+//   1. search.list  — recent + high-view short-form candidates (100 units/page;
+//                     SEARCH_PAGES pages, so the English filter has slack)
 //   2. videos.list  — the real metadata for those IDs (1 unit, batched)
-//   3. filter       — keep only what will actually embed and play as a Short
+//   3. filter       — keep only what will embed AND reads as English/American:
+//                     a playable Short, in-region, and not in another language
+//                     (regionCode/relevanceLanguage on the search are only biases,
+//                     so the hard language gate is here). See filterReason.
 //   4. rank         — by view *velocity*, so a 6-hour rocket beats a 2-day-old
 //                     video with more lifetime views; take the top dozen
 //
@@ -40,9 +44,10 @@ export function parseDurationSec(iso) {
  *
  * A non-embeddable video is a dead tile. Over-long biases away from true Shorts
  * (the API has no isShort flag). Age-restricted won't play in an embed anyway,
- * and a region block means it won't play *here*.
+ * and a region block means it won't play *here*. Off-language means it isn't for
+ * this feed's audience — see the two language signals below.
  */
-export function filterReason(video, { maxDurationSec, region } = {}) {
+export function filterReason(video, { maxDurationSec, region, relevanceLanguage = 'en', requireLatinTitle = true } = {}) {
   if (!video || !video.id) return 'no-id';
   if (video.status?.embeddable !== true) return 'not-embeddable';
 
@@ -57,7 +62,38 @@ export function filterReason(video, { maxDurationSec, region } = {}) {
     if (Array.isArray(rr.blocked) && rr.blocked.includes(region)) return 'region-blocked';
     if (Array.isArray(rr.allowed) && !rr.allowed.includes(region)) return 'region-blocked';
   }
+
+  // Aim the feed at an English-speaking (American) audience. Two signals, because
+  // neither alone is enough: search.list's regionCode/relevanceLanguage are only
+  // biases, so globally-viral non-English Shorts still arrive on raw view count.
+  //   1. If the video *declares* a language and it isn't ours, drop it. Precise,
+  //      but most Shorts leave defaultAudioLanguage/defaultLanguage unset.
+  //   2. If the title is written mostly in a non-Latin script, drop it. Blunt,
+  //      but it catches the Hindi/CJK/etc. content that (1) misses for lack of
+  //      metadata — which is exactly what was dominating the feed.
+  const want = (relevanceLanguage || 'en').toLowerCase().split('-')[0];
+  const declared = (video.snippet?.defaultAudioLanguage || video.snippet?.defaultLanguage || '')
+    .toLowerCase().split('-')[0];
+  if (want && declared && declared !== want) return 'lang-mismatch';
+  if (requireLatinTitle && isNonLatinTitle(video.snippet?.title)) return 'non-latin-title';
+
   return null; // keep it
+}
+
+/**
+ * Whether a title is written predominantly in a non-Latin script (Devanagari,
+ * CJK, Arabic, Cyrillic, …). Only *letters* count, so digits, punctuation, and
+ * emoji don't sway it — an emoji-heavy English title still reads as Latin. A
+ * title with no letters at all (pure emoji/numbers) can't be judged and is
+ * treated as Latin: we drop only on positive evidence of another script, never
+ * on absence of one.
+ */
+export function isNonLatinTitle(title) {
+  if (typeof title !== 'string') return false;
+  const letters = title.match(/\p{Letter}/gu) || [];
+  if (!letters.length) return false;
+  const latin = letters.filter((ch) => /\p{Script=Latin}/u.test(ch)).length;
+  return latin / letters.length < 0.5;
 }
 
 /**
@@ -171,30 +207,50 @@ async function withRetry(fn, { attempts = DEFAULT_ATTEMPTS, label = 'request' } 
  * search.list — recent, high-view, short-form candidate IDs. `order=viewCount`
  * within a `publishedAfter` window is what surfaces *trending short-form*;
  * chart=mostPopular is dominated by long-form and surfaces almost no Shorts.
- * 100 quota units.
+ * 100 quota units per page.
+ *
+ * Pulls up to `config.searchPages` pages (50 IDs each). One page is plenty of
+ * raw candidates for a dozen, but the English filter downstream can cut a global
+ * view-sorted page down hard, so a second page keeps the dozen from going thin.
  *
  * A `q` term is required, not optional: search.list with no query returns zero
  * rows however it's ordered (verified against the live API). `config.searchQuery`
  * ('#shorts' by default) anchors it to short-form; the filter and velocity rank
  * below do the actual curation.
+ *
+ * @returns {Promise<{ids: string[], pages: number}>} deduped IDs and how many
+ *   pages were actually fetched (fewer than requested if the results ran out) —
+ *   the caller needs the page count to bill quota honestly.
  */
 export async function searchShortIds(config, { apiKey, now = new Date() } = {}) {
-  const url = new URL(`${API_BASE}/search`);
-  url.searchParams.set('part', 'snippet');
-  url.searchParams.set('type', 'video');
-  url.searchParams.set('q', config.searchQuery);
-  url.searchParams.set('videoDuration', 'short');
-  url.searchParams.set('order', 'viewCount');
-  url.searchParams.set('publishedAfter', isoHoursAgo(config.publishedWithinHours, now));
-  url.searchParams.set('regionCode', config.region);
-  url.searchParams.set('relevanceLanguage', config.relevanceLanguage);
-  url.searchParams.set('maxResults', String(config.searchMaxResults));
-  url.searchParams.set('key', apiKey);
+  const ids = new Set();
+  let pageToken;
+  let pages = 0;
 
-  const data = await withRetry(() => fetchJson(url, { label: 'search.list' }), { label: 'search.list' });
-  return (data.items ?? [])
-    .map((it) => it.id?.videoId)
-    .filter((id) => typeof id === 'string' && id);
+  do {
+    const url = new URL(`${API_BASE}/search`);
+    url.searchParams.set('part', 'snippet');
+    url.searchParams.set('type', 'video');
+    url.searchParams.set('q', config.searchQuery);
+    url.searchParams.set('videoDuration', 'short');
+    url.searchParams.set('order', 'viewCount');
+    url.searchParams.set('publishedAfter', isoHoursAgo(config.publishedWithinHours, now));
+    url.searchParams.set('regionCode', config.region);
+    url.searchParams.set('relevanceLanguage', config.relevanceLanguage);
+    url.searchParams.set('maxResults', String(config.searchMaxResults));
+    if (pageToken) url.searchParams.set('pageToken', pageToken);
+    url.searchParams.set('key', apiKey);
+
+    const data = await withRetry(() => fetchJson(url, { label: 'search.list' }), { label: 'search.list' });
+    pages += 1;
+    for (const it of data.items ?? []) {
+      const id = it.id?.videoId;
+      if (typeof id === 'string' && id) ids.add(id);
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken && pages < config.searchPages);
+
+  return { ids: [...ids], pages };
 }
 
 /**
@@ -239,11 +295,11 @@ export async function discoverDozen(config, { apiKey, now = new Date() } = {}) {
 
   if (!apiKey) throw new Error('YOUTUBE_API_KEY is not set (see .env.example) — discovery has no client-only fallback');
 
-  const ids = await searchShortIds(config, { apiKey, now });
-  console.log(`[youtube] search.list returned ${ids.length} candidate id(s)`);
-  if (!ids.length) return { items: [], stats: { candidates: 0, survived: 0, kept: 0, dropped: {} }, quotaUnits: 100 };
+  const { ids, pages } = await searchShortIds(config, { apiKey, now });
+  console.log(`[youtube] search.list returned ${ids.length} candidate id(s) across ${pages} page(s)`);
+  if (!ids.length) return { items: [], stats: { candidates: 0, survived: 0, kept: 0, dropped: {} }, quotaUnits: 100 * pages };
 
   const videos = await hydrateVideos(ids, config, { apiKey });
-  const quotaUnits = 100 + Math.ceil(ids.length / VIDEOS_BATCH); // search 100 + 1/batch
+  const quotaUnits = 100 * pages + Math.ceil(ids.length / VIDEOS_BATCH); // search 100/page + 1/hydrate batch
   return { ...selectDozen(videos, config, now.getTime()), quotaUnits };
 }

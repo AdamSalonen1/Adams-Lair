@@ -5,9 +5,11 @@ once each morning. The Pi stays outbound-only: it makes two HTTPS calls to Googl
 and one to Supabase, and exposes nothing.
 
 The script does all the work — there is no LLM in the core (unlike Ride Report).
-Discovery is two API calls; the taste is a filter and a velocity rank, both pure
-functions in `youtube.js`. Every field the page renders comes from `videos.list`
-metadata, trimmed to the frozen Phase-1 item shape before it's stored.
+Discovery is a `search.list` (paged) then a `videos.list`; the taste is a filter
+and a velocity rank, both pure functions in `youtube.js`. The filter also aims
+the feed at an English-speaking audience — see "Aiming the feed…" below. Every
+field the page renders comes from `videos.list` metadata, trimmed to the frozen
+Phase-1 item shape before it's stored.
 
 One thing worth stating up front: this worker writes into the **same Supabase
 project as Ride Report** (free tier caps an org at two projects). It touches only
@@ -62,15 +64,16 @@ embedding off, age-restricted, region-blocked) so the filter is exercised, not
 bypassed. The page picks up the row on its next load. It spends no quota.
 
 Config knobs (all optional, defaults in `.env.example`): `REGION`,
-`RELEVANCE_LANGUAGE`, `MAX_DURATION_SEC`, `DOZEN_SIZE`, `PUBLISHED_WITHIN_HOURS`,
-`RETENTION_DAYS`. A second region or a 3-minute-Short experiment is a value
+`RELEVANCE_LANGUAGE`, `REQUIRE_LATIN_TITLE`, `SEARCH_QUERY`, `SEARCH_PAGES`,
+`MAX_DURATION_SEC`, `DOZEN_SIZE`, `PUBLISHED_WITHIN_HOURS`, `RETENTION_DAYS`. A
+second region, an English-only feed, or a 3-minute-Short experiment is a value
 change, not a code change.
 
 ## Discovery, and the quota
 
 | Call | Part | Cost |
 |---|---|---|
-| `search.list` | `q=#shorts`, `type=video`, `videoDuration=short`, `order=viewCount`, `publishedAfter`=now−48h, `regionCode`, `relevanceLanguage=en`, `maxResults=50` | 100 units |
+| `search.list` | `q=#shorts`, `type=video`, `videoDuration=short`, `order=viewCount`, `publishedAfter`=now−48h, `regionCode`, `relevanceLanguage=en`, `maxResults=50`, paged ×`SEARCH_PAGES` | 100 units/page |
 | `videos.list` | `contentDetails,status,statistics,snippet` on those IDs, batched ≤50 | 1 unit/batch |
 
 The `q` term is **required**, not decorative: `search.list` with no query returns
@@ -78,11 +81,12 @@ zero rows however it's ordered (an unanchored `order=viewCount` search matches
 nothing — the project plan's query spec omitted this). `SEARCH_QUERY` (default
 `#shorts`) anchors it to short-form; the filter and velocity rank do the curation.
 
-≈ **101 units/day** against a 10,000/day quota — two orders of magnitude of
-headroom, so retries and a second region later are free. `chart=mostPopular` is
-deliberately *not* used: it's dominated by long-form music videos and trailers
-and surfaces almost no Shorts. A recency-bounded, view-sorted `short` search is
-what actually surfaces trending short-form.
+≈ **202 units/day** at the default `SEARCH_PAGES=2` against a 10,000/day quota —
+two orders of magnitude of headroom, so retries, more pages, and a second region
+later are free. `chart=mostPopular` is deliberately *not* used: it's dominated by
+long-form music videos and trailers and surfaces almost no Shorts. A
+recency-bounded, view-sorted `short` search is what actually surfaces trending
+short-form.
 
 The **filter** keeps only `status.embeddable === true`, duration ≤
 `MAX_DURATION_SEC`, not age-restricted, and not region-blocked for `REGION` — so
@@ -90,6 +94,30 @@ the dozen that ships is a dozen that actually plays; no dead tiles. The **rank**
 is view *velocity* (`viewCount / hours_since_published`, floored at one hour), so
 a 6-hour rocket outranks a 2-day-old video with more lifetime views. Top
 `DOZEN_SIZE` win.
+
+### Aiming the feed at an English-speaking (American) audience
+
+`regionCode`/`relevanceLanguage` on the search are only *biases*, not filters. On
+a global `order=viewCount` search that isn't nearly enough: Indian and other
+non-English mega-channels post the highest-view Shorts on the platform, so the
+raw candidate set — and then the velocity rank — skews heavily Hindi/CJK/etc.
+
+So the filter carries a hard language gate, on two signals because neither alone
+suffices:
+
+1. **`lang-mismatch`** — the video *declares* a language (`defaultAudioLanguage`
+   or `defaultLanguage`) that isn't `RELEVANCE_LANGUAGE`. Precise, but most Shorts
+   never set it.
+2. **`non-latin-title`** — the title is written predominantly in a non-Latin
+   script (Devanagari, CJK, Arabic, …). Blunt, but it catches the content signal
+   (1) misses for lack of metadata. Emoji and digits don't count as letters, so
+   an emoji-heavy English title is safe; a title with no letters at all is kept.
+   `REQUIRE_LATIN_TITLE=0` turns this off for a deliberately non-Latin feed.
+
+Because the gate can cut a global page of 50 down hard, `SEARCH_PAGES` (default 2)
+pulls a second page so the English survivors still comfortably fill a dozen. Both
+drops show up in the run's dropped-reason tally, so a suddenly-thin feed is
+diagnosable rather than mysterious.
 
 ## Exit codes
 

@@ -6,7 +6,7 @@
 //   node test-youtube.js
 
 import assert from 'node:assert/strict';
-import { parseDurationSec, filterReason, velocity, selectDozen, toItem } from './youtube.js';
+import { parseDurationSec, filterReason, isNonLatinTitle, velocity, selectDozen, toItem } from './youtube.js';
 
 let passed = 0;
 let failed = 0;
@@ -80,6 +80,47 @@ test('filterReason drops region-blocked (blocked list and allowed list)', () => 
 
 test('filterReason drops a video with no id', () => {
   assert.equal(filterReason({ ...video(), id: undefined }, CONFIG), 'no-id');
+});
+
+// ===== filterReason — the English/American language gate =====
+
+test('filterReason keeps English-declared and unlabelled Latin videos', () => {
+  // Explicitly English audio: kept.
+  assert.equal(filterReason(video({ snippet: { defaultAudioLanguage: 'en-US' } }), CONFIG), null);
+  // No language metadata at all + a Latin title: kept (we drop only on evidence).
+  assert.equal(filterReason(video({ snippet: { title: 'Most viewed Shorts of 2025' } }), CONFIG), null);
+});
+
+test('filterReason drops a video that declares a non-English language', () => {
+  // Latin title, but the metadata says the audio is Hindi -> not for this feed.
+  assert.equal(filterReason(video({ snippet: { defaultAudioLanguage: 'hi' } }), CONFIG), 'lang-mismatch');
+  assert.equal(filterReason(video({ snippet: { defaultLanguage: 'es' } }), CONFIG), 'lang-mismatch');
+});
+
+test('filterReason drops a predominantly non-Latin title (the Hindi case)', () => {
+  const hindi = video({ snippet: { title: 'दुनिया का सबसे मजेदार वीडियो 😂' } });
+  assert.equal(filterReason(hindi, CONFIG), 'non-latin-title');
+});
+
+test('filterReason keeps an emoji/number-only title (nothing to judge)', () => {
+  assert.equal(filterReason(video({ snippet: { title: '🔥🔥🔥 2025 🏆' } }), CONFIG), null);
+});
+
+test('filterReason: REQUIRE_LATIN_TITLE off lets a non-Latin title through', () => {
+  const jp = video({ snippet: { title: 'サメの赤ちゃん' } });
+  assert.equal(filterReason(jp, { ...CONFIG, requireLatinTitle: false }), null);
+});
+
+// ===== isNonLatinTitle =====
+
+test('isNonLatinTitle: Latin (incl. accents), emoji-only, and non-Latin scripts', () => {
+  assert.equal(isNonLatinTitle('Most Viewed YouTube Shorts of 2025'), false);
+  assert.equal(isNonLatinTitle('Café au lait, résumé'), false); // accented Latin is still Latin
+  assert.equal(isNonLatinTitle('🔥🔥🔥 100% 🏆'), false);        // no letters -> not judged
+  assert.equal(isNonLatinTitle('दुनिया का सबसे'), true);         // Devanagari
+  assert.equal(isNonLatinTitle('OMG 😱 मजेदार वीडियो देखो अभी'), true); // majority Devanagari
+  assert.equal(isNonLatinTitle('サメの赤ちゃん'), true);          // Japanese
+  assert.equal(isNonLatinTitle(42), false);                      // non-string
 });
 
 // ===== velocity =====
