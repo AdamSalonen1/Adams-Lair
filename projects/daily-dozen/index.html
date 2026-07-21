@@ -29,6 +29,10 @@
       <span class="kicker">Twelve and done</span>
       <h1>Daily <span class="gradient">Dozen</span></h1>
       <p class="dd-sub" id="dd-date">Today's dozen</p>
+      <p class="dd-status" id="dd-status" hidden>
+        <span class="dd-status-dot" id="dd-status-dot" role="img"></span>
+        <span id="dd-status-text"></span>
+      </p>
     </header>
 
     <div class="dd-progress" aria-hidden="false">
@@ -51,6 +55,7 @@
         <div class="dd-now">
           <p class="dd-now-title" id="dd-now-title"></p>
           <p class="dd-now-channel" id="dd-now-channel"></p>
+          <a class="dd-now-yt" id="dd-now-yt" href="#" target="_blank" rel="noopener" hidden>Watch on YouTube ↗</a>
           <button class="dd-advance" id="dd-advance" type="button">Skip →</button>
         </div>
       </div>
@@ -64,7 +69,7 @@
     <section class="dd-end" id="dd-end" hidden>
       <div class="dd-card-inner">
         <span class="dd-end-check" aria-hidden="true">✓</span>
-        <h2>That's the dozen.</h2>
+        <h2 id="dd-end-title">That's the dozen.</h2>
         <p>You're caught up — there's no more feed today. That's the whole idea.</p>
         <p class="dd-end-next">Next dozen in <span id="dd-countdown" class="dd-countdown">–</span></p>
       </div>
@@ -72,9 +77,9 @@
 
     <section class="dd-empty" id="dd-empty" hidden>
       <div class="dd-card-inner">
-        <span class="dd-end-check dd-end-check--wait" aria-hidden="true">⏳</span>
-        <h2>Today's dozen isn't up yet.</h2>
-        <p>The feed is gathered fresh each morning. Check back in a little while.</p>
+        <span class="dd-end-check dd-end-check--wait" id="dd-empty-icon" aria-hidden="true">⏳</span>
+        <h2 id="dd-empty-title">Today's dozen isn't up yet.</h2>
+        <p id="dd-empty-body">The feed is gathered fresh each morning. Check back in a little while.</p>
       </div>
     </section>
 

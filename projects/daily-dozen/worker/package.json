@@ -10,6 +10,6 @@
   "scripts": {
     "start": "node run-daily.js",
     "mock": "MOCK_YOUTUBE=1 node run-daily.js",
-    "test": "node test-youtube.js"
+    "test": "node test-youtube.js && node test-status.js"
   }
 }

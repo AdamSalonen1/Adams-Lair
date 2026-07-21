@@ -9,8 +9,11 @@
 // feed came from (that's feed.js). It owns which video is current, what's been
 // watched, and the shape of the screen.
 
-import { loadFeed } from './feed.js';
+import { loadFeed, fetchWorkerStatus, feedIsLive, feedToday } from './feed.js';
+import { feedStatus } from './status.js';
 import { createPlayer } from './player.js';
+
+const YT_WATCH = (id) => `https://www.youtube.com/watch?v=${id}`;
 
 // ===== State =====
 
@@ -26,6 +29,9 @@ const watched = new Set();     // indices done for good; persisted per feed_date
 const $ = (id) => document.getElementById(id);
 const el = {
   date: $('dd-date'),
+  status: $('dd-status'),
+  statusDot: $('dd-status-dot'),
+  statusText: $('dd-status-text'),
   bar: $('dd-progress-bar'),
   count: $('dd-progress-count'),
   stage: $('dd-stage'),
@@ -33,12 +39,24 @@ const el = {
   unavailableLink: $('dd-unavailable-link'),
   nowTitle: $('dd-now-title'),
   nowChannel: $('dd-now-channel'),
+  nowYt: $('dd-now-yt'),
   advance: $('dd-advance'),
   list: $('dd-list'),
   end: $('dd-end'),
+  endTitle: $('dd-end-title'),
   countdown: $('dd-countdown'),
   empty: $('dd-empty'),
+  emptyIcon: $('dd-empty-icon'),
+  emptyTitle: $('dd-empty-title'),
+  emptyBody: $('dd-empty-body'),
 };
+
+// "dozen" only when there really are twelve. Fewer, and the page says how many
+// there are rather than calling eight a dozen — the honest thin-day labeling the
+// Phase 4 plan asks for, applied everywhere the word would otherwise appear.
+function countNoun(n) {
+  return n === 12 ? 'dozen' : `${n} short${n === 1 ? '' : 's'}`;
+}
 
 // ===== Watched-state persistence =====
 //
@@ -86,13 +104,34 @@ function nextUnwatchedIndex(from) {
 
 function renderDate() {
   if (!el.date) return;
-  if (!feedDate) { el.date.textContent = "Today's dozen"; return; }
-  // Parse as a local date (feed_date is a calendar day, not an instant).
+  const noun = countNoun(items.length);
+  if (!feedDate) { el.date.textContent = `Today's ${noun}`; return; }
+  // Parse as a local date purely for the weekday/month labels (feed_date is a
+  // calendar day, not an instant). "Is it today" is judged in the feed's zone —
+  // the same clock the staleness note uses — so the header and the footnote can
+  // never disagree for a viewer whose local midnight has passed but Central's
+  // hasn't.
   const [y, m, d] = feedDate.split('-').map(Number);
   const dt = new Date(y, (m || 1) - 1, d || 1);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const label = dt.getTime() === today.getTime() ? "Today's dozen" : `${dt.toLocaleDateString(undefined, { weekday: 'long' })}'s dozen`;
-  el.date.textContent = `${label} · ${dt.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`;
+  const day = feedDate === feedToday() ? 'Today' : dt.toLocaleDateString(undefined, { weekday: 'long' });
+  el.date.textContent = `${day}'s ${noun} · ${dt.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}`;
+}
+
+/**
+ * The staleness footnote under the header. Silent on a fresh, current dozen —
+ * a working page has no line to spend — and otherwise a dot plus one sentence
+ * saying which silence this is. `decision` is null in the offline sample path,
+ * where there's no Pi to have a status.
+ */
+function renderStatusNote(decision) {
+  if (!el.status) return;
+  if (!decision || decision.silent || !decision.note) { el.status.hidden = true; return; }
+  if (el.statusDot) {
+    el.statusDot.dataset.level = decision.level;
+    el.statusDot.setAttribute('aria-label', decision.label);
+  }
+  if (el.statusText) el.statusText.textContent = decision.note;
+  el.status.hidden = false;
 }
 
 function renderProgress() {
@@ -133,7 +172,19 @@ function renderList() {
 
     btn.append(mark, text);
     btn.addEventListener('click', () => goTo(i));
-    li.append(btn);
+
+    // Every card carries its own link to the source on YouTube, credited to its
+    // channel — a sibling of the play button, not a wrapper around it, so the
+    // row still plays in place and only this corner leaves the page.
+    const yt = document.createElement('a');
+    yt.className = 'dd-item-yt';
+    yt.href = YT_WATCH(item.video_id);
+    yt.target = '_blank';
+    yt.rel = 'noopener';
+    yt.textContent = '↗';
+    yt.setAttribute('aria-label', `Watch “${item.title || 'this short'}” on YouTube`);
+
+    li.append(btn, yt);
     el.list.append(li);
   });
 }
@@ -142,6 +193,16 @@ function renderNow() {
   const item = items[currentIndex];
   if (el.nowTitle) el.nowTitle.textContent = item?.title || '';
   if (el.nowChannel) el.nowChannel.textContent = item?.channel_title || '';
+  // Attribution + escape hatch: the current video is always one click from its
+  // source on YouTube, credited to its channel. Good citizenship, and TOS-kind.
+  if (el.nowYt) {
+    if (item?.video_id) {
+      el.nowYt.href = YT_WATCH(item.video_id);
+      el.nowYt.hidden = false;
+    } else {
+      el.nowYt.hidden = true;
+    }
+  }
   updateAdvanceButton();
 }
 
@@ -150,7 +211,8 @@ function updateAdvanceButton() {
   const noneLeft = nextUnwatchedIndex(currentIndex) === -1;
   const consumed = currentConsumed || watched.has(currentIndex);
   el.advance.classList.toggle('is-ready', consumed || noneLeft);
-  el.advance.textContent = noneLeft ? "That's the dozen →" : (consumed ? 'Next →' : 'Skip →');
+  const doneLabel = items.length === 12 ? "That's the dozen →" : "That's all →";
+  el.advance.textContent = noneLeft ? doneLabel : (consumed ? 'Next →' : 'Skip →');
 }
 
 // ===== Flow =====
@@ -222,13 +284,26 @@ function hideUnavailable() {
 
 function showEnd() {
   el.stage?.setAttribute('hidden', '');
+  // "That's the dozen." only when it was one; a thin day gets an honest heading.
+  if (el.endTitle) el.endTitle.textContent = items.length === 12 ? "That's the dozen." : "That's all for today.";
   if (el.end) el.end.hidden = false;
   renderProgress();
   startCountdown();
 }
 
-function showEmpty() {
+/**
+ * No dozen to show. `decision` (from status.js) chooses the words: the calm
+ * "isn't up yet" by default, or the "fetcher's gone quiet" variant when the
+ * heartbeat says so — never a raw error either way. Null decision (offline
+ * sample path, or an unconfigured page) keeps index.html's default copy.
+ */
+function showEmpty(decision) {
   el.stage?.setAttribute('hidden', '');
+  if (decision?.empty) {
+    if (el.emptyTitle) el.emptyTitle.textContent = decision.empty.title;
+    if (el.emptyBody) el.emptyBody.textContent = decision.empty.body;
+    if (el.emptyIcon) el.emptyIcon.textContent = decision.level === 'down' ? '📡' : '⏳';
+  }
   if (el.empty) el.empty.hidden = false;
 }
 
@@ -253,14 +328,28 @@ function startCountdown() {
 // ===== Init =====
 
 async function init() {
-  const feed = await loadFeed();
-  if (!feed || !feed.items.length) { showEmpty(); return; }
+  // Feed and heartbeat in parallel: the heartbeat only decides which sentence
+  // sits under the feed, so there's no reason to make it queue behind the feed
+  // read. The status read is skipped entirely in the offline sample path, where
+  // there is no Pi to have a status. Both settle to null rather than throwing.
+  const live = feedIsLive();
+  const [feed, workerStatus] = await Promise.all([
+    loadFeed(),
+    live ? fetchWorkerStatus() : Promise.resolve(null),
+  ]);
+
+  const decision = live
+    ? feedStatus({ feed, status: workerStatus, today: feedToday(), now: Date.now() })
+    : null;
+
+  if (!feed || !feed.items.length) { showEmpty(decision); return; }
 
   items = feed.items;
   feedDate = feed.feed_date;
 
   loadWatched();
   renderDate();
+  renderStatusNote(decision);
   renderProgress();
   renderList();
 

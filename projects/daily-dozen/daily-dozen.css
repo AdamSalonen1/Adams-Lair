@@ -32,6 +32,31 @@
   font-weight: 600;
 }
 
+/* ===== Staleness footnote ===== */
+/* Hidden on a fresh day (app.js keeps it silent); when it appears it's a dot
+   and one quiet sentence, never a panel and never a raw error. */
+.dd-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.dd-status-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+
+.dd-status-dot[data-level="ok"]      { background: #16a34a; }
+.dd-status-dot[data-level="waiting"] { background: var(--orange); }
+.dd-status-dot[data-level="down"]    { background: var(--red); }
+
 /* ===== Progress ===== */
 .dd-progress {
   display: flex;
@@ -137,6 +162,20 @@
   color: var(--ink-soft);
 }
 
+/* Attribution link for the current video — quiet by default, orange on hover,
+   sitting between the channel line and the Next button. */
+.dd-now-yt {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.dd-now-yt:hover { color: var(--orange-deep); border-bottom-color: currentColor; }
+
 .dd-advance {
   margin-top: 14px;
   padding: 11px 20px;
@@ -174,13 +213,22 @@
 
 .dd-list { list-style: none; }
 
-.dd-item { margin-bottom: 4px; }
+/* Row = the play button (fills the width) plus its own YouTube link in the
+   corner. A flex row rather than a link wrapping a button, so clicking the row
+   plays in place and only the corner leaves the page. */
+.dd-item {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  margin-bottom: 4px;
+}
 
 .dd-item-btn {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 8px 10px;
   text-align: left;
   background: transparent;
@@ -191,6 +239,30 @@
 }
 
 .dd-item-btn:hover { background: rgba(249, 115, 22, 0.09); }
+
+/* Per-card attribution. Faint until the row is hovered or the link is focused,
+   so twelve of them don't shout, but always reachable by keyboard and touch. */
+.dd-item-yt {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink-soft);
+  opacity: 0.35;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+
+.dd-item:hover .dd-item-yt { opacity: 0.8; }
+.dd-item-yt:hover,
+.dd-item-yt:focus-visible {
+  opacity: 1;
+  color: var(--orange-deep);
+  background: rgba(249, 115, 22, 0.12);
+}
 
 .dd-item.is-current .dd-item-btn {
   background: var(--orange-soft);

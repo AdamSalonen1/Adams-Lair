@@ -45,6 +45,21 @@ function wantsSample() {
   return new URLSearchParams(window.location.search).has('sample');
 }
 
+/**
+ * True when the page is reading a real project (and not deliberately in the
+ * offline sample path). Only then is the heartbeat worth consulting or a
+ * staleness note worth showing — over the committed sample there is no Pi to
+ * have an opinion about. app.js gates the Phase-4 status UX on this.
+ */
+export function feedIsLive() {
+  return isConfigured() && !wantsSample();
+}
+
+/** Today as YYYY-MM-DD in the feed's zone — the date app.js compares a feed against. */
+export function feedToday() {
+  return todayInFeedZone();
+}
+
 /** Today as YYYY-MM-DD in the feed's timezone, computed via Intl so it's right regardless of the device's local zone. */
 function todayInFeedZone() {
   return new Intl.DateTimeFormat('en-CA', {
@@ -87,6 +102,29 @@ async function fetchFeedRow() {
   const todays = await publicRead(`shorts_feeds?feed_date=eq.${today}&${FEED_SELECT}&limit=1`);
   if (todays) return todays;
   return publicRead(`shorts_feeds?${FEED_SELECT}&order=feed_date.desc&limit=1`);
+}
+
+/**
+ * The Pi's heartbeat row, or null. Used only to tell "today's dozen isn't up
+ * yet" from "the fetcher's down" (see status.js) — the page shows the same last
+ * good dozen either way; the heartbeat only decides which sentence sits under it.
+ *
+ * `last_error` is deliberately NOT selected. It is world-readable, but the page
+ * has no business rendering a raw error string to a visitor — its job is to say
+ * "this is old", not to explain the Pi's internals to a stranger. That column is
+ * there for `curl` and the journal. Never throws: a heartbeat that won't load is
+ * an *unknown* worker, which status.js treats as "don't cry wolf", not as down.
+ *
+ * @returns {Promise<null | {last_run_at?: string, last_ok_at?: string, last_item_count?: number}>}
+ */
+export async function fetchWorkerStatus() {
+  if (!isConfigured()) return null;
+  try {
+    return await publicRead('dozen_worker_status?select=last_run_at,last_ok_at,last_item_count&limit=1');
+  } catch (err) {
+    console.warn('Daily Dozen: could not load the worker status —', err);
+    return null;
+  }
 }
 
 /**
