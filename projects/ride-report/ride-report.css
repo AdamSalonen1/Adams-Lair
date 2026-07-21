@@ -1,0 +1,741 @@
+/* ===== Ride Report ===== */
+
+:root {
+  --score-good: #16a34a;
+  --score-mid: #d97706;
+  --score-bad: #dc2626;
+  --score-na: #a8a29e;
+}
+
+/* `hidden` is only `display: none` in the browser's own stylesheet, which any
+   class carrying an explicit `display` outranks. Half the blocks on this page
+   are flex or grid AND toggled by `hidden` from JS, so restate the rule with
+   enough weight to actually win. Without this the trip form and the sign-in
+   form render permanently open. */
+[hidden] { display: none !important; }
+
+.ride-main {
+  max-width: 720px;
+  padding: 40px 24px 88px;
+}
+
+/* ===== Head ===== */
+.ride-head { text-align: center; margin-bottom: 28px; }
+
+.ride-head h1 {
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 10px;
+}
+
+.ride-head h1 .gradient {
+  background: linear-gradient(100deg, var(--orange) 10%, var(--red) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ride-sub { color: var(--ink-soft); }
+
+/* ===== Loading / error ===== */
+.ride-status, .ride-error {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--ink-soft);
+}
+
+.ride-error p {
+  color: var(--red-deep);
+  font-weight: 600;
+}
+
+/* ===== Score card ===== */
+.score-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-top: 4px solid var(--orange);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  box-shadow: 0 4px 14px rgba(43, 26, 18, 0.05);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.score-dial {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  border: 6px solid var(--score-na);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+
+.score-num {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.verdict {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.limiting-line {
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
+.window-callout {
+  margin-top: 10px;
+  font-weight: 700;
+  color: var(--orange-deep);
+}
+
+/* ===== Narrative (the Pi's prose, layered over the score) ===== */
+.narrative {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--orange-soft);
+  color: var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+  /* The card centres its short lines on narrow screens; a paragraph of prose
+     is not a short line. */
+  text-align: left;
+}
+
+.report-stamp {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-align: left;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* The whole heartbeat UI. Deliberately a dot and not a dashboard: on a healthy
+   day it is 8 pixels of green in the corner of a footnote, which is all a
+   working system has earned. `flex: none` keeps it circular when the sentence
+   beside it wraps. */
+.status-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--score-na);
+}
+
+.status-dot[data-level="ok"] { background: var(--score-good); }
+.status-dot[data-level="stale"] { background: var(--score-mid); }
+.status-dot[data-level="down"] { background: var(--score-bad); }
+
+/* An empty text span still occupies the flex gap, which leaves the dot looking
+   nudged off the left margin on a good day. */
+#report-stamp-text:empty { display: none; }
+
+/* ===== Hourly strip ===== */
+/* All 24 hours always fit the width — the blocks shrink rather than the strip
+   scrolling, so its height stays put instead of jumping when a horizontal
+   scrollbar appears. The bottom padding is reserved for the hour ticks, which
+   hang below the blocks. */
+.hourly-strip {
+  display: flex;
+  gap: 3px;
+  padding: 4px 4px 24px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+
+/* A <button>, so it is tabbable and announces itself — hence the reset. The
+   blocks are ~14px wide and cannot meet a 44px touch target without becoming a
+   different component; the tap area is the full 56px height, and every hour is
+   also reachable from the keyboard. */
+.hour-block {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  font: inherit;
+  opacity: 0.92;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.hour-block:hover { opacity: 1; transform: translateY(-2px); }
+
+.hour-block:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Reaches past the 3px gap so the marker is legible at block width. */
+.hour-block.is-selected {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink);
+}
+
+/* A caret over the hour containing right now. The page opens with this hour
+   selected, but the selection ring follows the reader's clicks — this stays put
+   so "now" is still findable after they have poked at the evening. */
+.hour-block--now::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--ink-soft);
+}
+
+.hour-block--night { opacity: 0.35; }
+
+.hour-block--night:hover,
+.hour-block--night.is-selected { opacity: 0.6; }
+
+.hour-block-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ===== Hour detail (the breakdown behind one block) ===== */
+.hour-detail {
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.hour-detail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hour-detail-when {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hour-detail-score {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hour-detail-why {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  margin-top: 2px;
+}
+
+.factor-list {
+  list-style: none;
+  margin-top: 12px;
+  border-top: 1px solid var(--orange-soft);
+}
+
+.factor {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 4.5rem 2rem;
+  align-items: center;
+  gap: 2px 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--orange-soft);
+  font-size: 0.88rem;
+}
+
+.factor:last-child { border-bottom: none; }
+
+/* The row that actually set the score, pulled forward — it is the answer, and
+   the other four are only there to show what it beat. */
+.factor--limiting .factor-name,
+.factor--limiting .factor-points { font-weight: 800; color: var(--orange-deep); }
+
+.factor-name { font-weight: 600; }
+
+.factor-value { color: var(--ink-soft); }
+
+.factor-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--orange-soft);
+  overflow: hidden;
+}
+
+.factor-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.factor-points {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.factor-note {
+  grid-column: 1 / -1;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  text-wrap: pretty;
+}
+
+/* ===== Mud badge ===== */
+.mud-badge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-left: 4px solid var(--score-na);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.mud-badge[data-risk="dry"] { border-left-color: var(--score-good); }
+.mud-badge[data-risk="damp"] { border-left-color: var(--score-mid); }
+.mud-badge[data-risk="muddy"] { border-left-color: var(--score-bad); }
+
+.mud-icon { font-size: 1.8rem; }
+
+.mud-risk { font-weight: 700; }
+
+.mud-detail { color: var(--ink-soft); font-size: 0.85rem; }
+
+/* ===== Outlook ===== */
+.outlook {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.outlook-day {
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.outlook-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+
+.outlook-score {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.outlook-verdict { color: var(--ink-soft); font-size: 0.9rem; }
+
+/* ===== Buttons ===== */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: 999px;
+  padding: 11px 20px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+}
+
+.btn:hover { border-color: var(--orange); color: var(--orange-deep); }
+.btn:active { transform: translateY(1px); }
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--orange-deep);
+  border-color: var(--orange-deep);
+}
+
+.btn-primary:hover { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+.btn-danger { color: var(--red-deep); }
+.btn-danger:hover { border-color: var(--red); color: var(--red-deep); background: #fff5f5; }
+
+.btn-sm {
+  padding: 7px 15px;
+  min-height: 38px;
+  font-size: 0.88rem;
+}
+
+/* ===== Trips ===== */
+.trips {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--orange-soft);
+}
+
+.trips-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.trips-head h2 {
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.trips-empty {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  padding: 8px 0 4px;
+}
+
+/* ===== Trip form ===== */
+.trip-form {
+  display: grid;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-top: 4px solid var(--orange);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.trip-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.trip-form input,
+.trip-form textarea {
+  font-family: inherit;
+  /* 16px minimum: anything smaller makes iOS Safari zoom the page on focus. */
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--orange-soft);
+  border-radius: 10px;
+  padding: 11px 13px;
+  min-height: 44px;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.trip-form textarea { resize: vertical; line-height: 1.5; }
+
+.trip-form input:focus,
+.trip-form textarea:focus,
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* ===== Place search ===== */
+.place-field { display: grid; gap: 6px; }
+
+/* The anchor the results list hangs from. Without it the list would position
+   against the form and cover the date fields. */
+.place-input-wrap { position: relative; }
+
+.place-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 260px;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+}
+
+.place-result {
+  padding: 11px 13px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--orange-soft);
+}
+
+.place-result:last-child { border-bottom: none; }
+
+/* Hover and keyboard highlight share one look — the pointer and the arrow keys
+   are pointing at the same thing, so they should not disagree on screen. */
+.place-result:hover,
+.place-result.is-active {
+  background: var(--paper);
+  color: var(--orange-deep);
+}
+
+.place-hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+.place-hint.is-error { color: var(--red-deep); font-weight: 600; }
+
+/* ===== Coordinates (manual fallback) ===== */
+.coord-details > summary {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 4px 0;
+  list-style-position: inside;
+}
+
+.coord-details > summary:hover { color: var(--orange-deep); }
+
+.coord-details[open] > summary { margin-bottom: 10px; }
+
+.form-error {
+  color: var(--red-deep);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+/* Pushed to the far end so it is never the button you hit by accident. */
+.form-actions .btn-danger { margin-left: auto; }
+
+/* ===== Trip cards ===== */
+.trip-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+}
+
+.trip-card {
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-left: 4px solid var(--orange);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.trip-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trip-card-head h3 {
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.trip-meta {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  margin-top: 2px;
+}
+
+.trip-notes {
+  margin-top: 8px;
+  font-size: 0.92rem;
+}
+
+.trip-outlook {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--orange-soft);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.trip-outlook.is-pending {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* Waiting on the Pi after a save. The pulse is the only thing on the card that
+   moves, so it reads as "working" without a spinner. */
+.trip-outlook.is-generating {
+  color: var(--ink-soft);
+  font-style: italic;
+  animation: trip-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes trip-pulse {
+  50% { opacity: 0.45; }
+}
+
+/* Someone who has asked not to see motion still needs to know it's working;
+   they just get the words without the pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .trip-outlook.is-generating { animation: none; }
+}
+
+.trip-best {
+  margin-top: 6px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+}
+
+/* Same footnote weight as .report-stamp on the daily card, so "the prose is
+   machine-written today" reads the same way in both places. */
+.trip-source {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.trip-stamp {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* ===== Footer sign-in ===== */
+.site-footer .auth-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 0;
+  padding-bottom: 24px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.auth-link {
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+
+.auth-link:hover { color: var(--orange-deep); }
+
+.auth-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-form input {
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--orange-soft);
+  border-radius: 999px;
+  padding: 9px 16px;
+  min-height: 40px;
+  min-width: 220px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-session {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-msg { width: 100%; text-align: center; }
+.auth-msg.is-error { color: var(--red-deep); font-weight: 600; }
+
+/* ===== Responsive ===== */
+@media (min-width: 480px) {
+  .score-card { flex-direction: row; text-align: left; }
+  .outlook { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 420px) {
+  /* Two date pickers side by side stop being tappable below this. */
+  .field-row { grid-template-columns: 1fr; }
+
+  /* 23 gaps eat real width once the blocks are only ~9px each. */
+  .hourly-strip { gap: 2px; }
+
+  /* Four columns leave the value column too narrow to hold "18 mph from the
+     WNW" on one line. Stack instead, keeping the label and its points paired on
+     the first row so the row still reads as one factor. */
+  .factor { grid-template-columns: minmax(0, 1fr) 2rem; }
+  .factor-name { grid-column: 1; grid-row: 1; }
+  .factor-points { grid-column: 2; grid-row: 1; }
+  .factor-value { grid-column: 1 / -1; grid-row: 2; }
+  .factor-bar { grid-column: 1 / -1; grid-row: 3; margin-top: 4px; }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "ride-report-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fetch -> score -> claude -p -> Supabase. Runs on a systemd timer on the Pi.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node run-scheduled.js",
+    "mock": "MOCK_SYNTH=1 node run-scheduled.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.7"
+  }
+}

@@ -1,0 +1,20 @@
+[Unit]
+Description=Ride Report — weekly trip backup
+Documentation=https://github.com/AdamSalonen1/Adams-Lair
+
+[Timer]
+# Weekly rather than the plan's monthly, because the job skips writing when
+# nothing changed — so the cost of asking more often is one REST GET, and the
+# benefit is that a trip typed on the 3rd isn't lost by a backup that runs on
+# the 1st.
+OnCalendar=Sun 03:30 America/Chicago
+
+# The Pi is not always on at 3:30 AM Sunday. Catch up rather than skip the week.
+Persistent=true
+RandomizedDelaySec=600
+AccuracySec=1h
+
+Unit=ride-report-backup.service
+
+[Install]
+WantedBy=timers.target

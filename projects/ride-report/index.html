@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ride Report — Adam's Lair</title>
+  <meta name="description" content="Is today a good day to ride? Live rideability score, best time windows, and mud risk for Fargo, ND.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="ride-report.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚴</text></svg>">
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="wrap">
+      <a class="brand" href="../../index.html">Adam's <span class="flame">Lair</span></a>
+      <ul>
+        <li><a href="../../index.html">Home</a></li>
+        <li><a href="../../about.html">About</a></li>
+        <li><a href="../../projects.html" class="active">Projects</a></li>
+        <li><a href="../../contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="wrap ride-main">
+
+    <header class="ride-head">
+      <span class="kicker">Fargo, ND</span>
+      <h1>Ride <span class="gradient">Report</span></h1>
+      <p class="ride-sub">Is today a good day to ride, and when?</p>
+    </header>
+
+    <section class="ride-status" id="ride-status">
+      <p class="loading">Checking the sky…</p>
+    </section>
+
+    <section class="ride-error" id="ride-error" hidden>
+      <p>Couldn't reach the weather data. Try refreshing in a bit.</p>
+    </section>
+
+    <section class="ride-content" id="ride-content" hidden>
+
+      <div class="score-card">
+        <div class="score-dial" id="score-dial">
+          <span class="score-num" id="score-num">--</span>
+        </div>
+        <div class="score-text">
+          <p class="verdict" id="verdict"></p>
+          <p class="limiting-line" id="limiting-line"></p>
+          <p class="window-callout" id="window-callout"></p>
+          <p class="narrative" id="narrative" hidden></p>
+
+          <!-- Heartbeat, at footnote weight. On a good day this is one small
+               green dot and no text; it grows a sentence only when there is
+               something the reader would be misled without. -->
+          <p class="report-stamp" id="report-stamp" hidden>
+            <span class="status-dot" id="status-dot" role="img"></span>
+            <span id="report-stamp-text"></span>
+          </p>
+        </div>
+      </div>
+
+      <div class="hourly-strip" id="hourly-strip" aria-label="Hourly rideability for today"></div>
+
+      <!-- Filled in by the strip on click. Stays out of the flow until then, so
+           an untouched page looks exactly as it did before. -->
+      <div class="hour-detail" id="hour-detail" role="region"
+           aria-label="Score breakdown for the selected hour" hidden></div>
+
+      <div class="mud-badge" id="mud-badge">
+        <span class="mud-icon" id="mud-icon"></span>
+        <div>
+          <p class="mud-risk" id="mud-risk"></p>
+          <p class="mud-detail" id="mud-detail"></p>
+        </div>
+      </div>
+
+      <div class="outlook" id="outlook"></div>
+
+    </section>
+
+    <!-- Revealed only when a session exists. RLS is what actually protects the
+         rows; hiding the section is tidiness, not security. -->
+    <section class="trips" id="trips" hidden>
+
+      <div class="trips-head">
+        <h2>Trips</h2>
+        <button type="button" class="btn btn-primary btn-sm" id="trip-add">Add a trip</button>
+      </div>
+
+      <form class="trip-form" id="trip-form" hidden>
+        <div class="place-field">
+          <label for="trip-place">Place</label>
+          <div class="place-input-wrap">
+            <input type="text" id="trip-place" maxlength="120" required
+                   placeholder="Rapid City" autocomplete="off"
+                   role="combobox" aria-autocomplete="list" aria-expanded="false"
+                   aria-controls="trip-place-results">
+            <ul class="place-results" id="trip-place-results" role="listbox"
+                aria-label="Matching places" hidden></ul>
+          </div>
+          <p class="place-hint" id="trip-place-hint" hidden></p>
+        </div>
+
+        <div class="field-row">
+          <label>Start
+            <input type="date" id="trip-start" required>
+          </label>
+          <label>End
+            <input type="date" id="trip-end" required>
+          </label>
+        </div>
+
+        <!-- `required` deliberately omitted: a required-but-empty control inside
+             a collapsed <details> is unfocusable, and the browser aborts the
+             submit without ever showing a message. readCoordinate() in trips.js
+             validates these, and opens this panel when it complains. -->
+        <details class="coord-details" id="trip-coords">
+          <summary>Coordinates</summary>
+          <div class="field-row">
+            <label>Latitude
+              <input type="number" id="trip-lat" step="any" min="-90" max="90"
+                     inputmode="decimal">
+            </label>
+            <label>Longitude
+              <input type="number" id="trip-lon" step="any" min="-180" max="180"
+                     inputmode="decimal">
+            </label>
+          </div>
+        </details>
+
+        <label>Notes
+          <textarea id="trip-notes" rows="2" maxlength="500"
+                    placeholder="Gravel bike, packing for wind"></textarea>
+        </label>
+
+        <p class="form-error" id="trip-error" hidden role="alert"></p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="trip-save">Save trip</button>
+          <button type="button" class="btn" id="trip-cancel">Cancel</button>
+          <button type="button" class="btn btn-danger" id="trip-delete" hidden>Delete</button>
+        </div>
+      </form>
+
+      <p class="trips-empty" id="trips-empty" hidden>
+        No trips yet. Add one and the Pi will start forecasting it.
+      </p>
+
+      <ul class="trip-list" id="trip-list"></ul>
+
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Adam Salonen · Adam's Lair</span>
+      <span>Built with an unreasonable amount of orange 🧡</span>
+    </div>
+
+    <!-- Stays hidden until we know Supabase is reachable, so an unconfigured
+         page never shows a login that cannot work. -->
+    <div class="wrap auth-bar" id="auth-bar" hidden>
+      <button type="button" class="auth-link" id="auth-open">Log in</button>
+
+      <form class="auth-form" id="auth-form" hidden>
+        <input type="email" id="auth-email" required autocomplete="email"
+               placeholder="you@example.com" aria-label="Email address">
+        <button type="submit" class="btn btn-primary btn-sm" id="auth-send">Send link</button>
+        <button type="button" class="auth-link" id="auth-cancel">Cancel</button>
+      </form>
+
+      <div class="auth-session" id="auth-session" hidden>
+        <span id="auth-who"></span>
+        <button type="button" class="auth-link" id="auth-signout">Log out</button>
+      </div>
+
+      <p class="auth-msg" id="auth-msg" hidden role="status"></p>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

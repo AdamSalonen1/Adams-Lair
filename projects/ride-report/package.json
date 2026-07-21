@@ -1,0 +1,5 @@
+{
+  "//": "Not a package — this exists so Node treats score.js/weather.js as ESM. The browser ignores it; without it, Node <22 loads these .js files as CommonJS and `export` throws.",
+  "type": "module",
+  "private": true
+}

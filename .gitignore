@@ -1,3 +1,9 @@
 # MusicBrainz response cache — only tools/archive/build-songs.mjs writes this
 tools/.cache/
 tools/archive/songs.generated.json
+
+# Secrets. This repo is public and GitHub Pages serves it verbatim, so a
+# committed .env is a published .env. Belt-and-braces with worker/.gitignore.
+.env
+**/.env
+node_modules/

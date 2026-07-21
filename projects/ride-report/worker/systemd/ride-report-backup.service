@@ -1,0 +1,36 @@
+[Unit]
+Description=Ride Report — snapshot trips to JSON
+Documentation=https://github.com/AdamSalonen1/Adams-Lair
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=adams
+Group=adams
+WorkingDirectory=/home/adams/projects/Adams-Lair/projects/ride-report/worker
+EnvironmentFile=/home/adams/projects/Adams-Lair/projects/ride-report/worker/.env
+
+Environment=NODE_ENV=production
+
+# No flock. This reads `trips` and writes a file — it never calls Claude and
+# never touches `reports`, so it has nothing to serialize against and no reason
+# to make a synthesis run wait behind it.
+ExecStart=/usr/bin/node backup-trips.js
+
+# One REST GET and a small file write. If this hasn't finished in two minutes,
+# the network is the problem and the next week's run is the right answer.
+TimeoutStartSec=120
+Nice=15
+
+# Same pair as the other two units, and deliberately no further sandboxing.
+# ProtectHome/ReadWritePaths were tempting — the snapshots carry trip notes and
+# destinations — but ReadWritePaths on a directory that doesn't exist yet fails
+# the unit outright, which would make the backup job's first run its most
+# likely failure. The snapshots are written 0600 by the script instead.
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ride-report-backup

@@ -1,0 +1,59 @@
+[Unit]
+Description=Ride Report — scheduled synthesis run
+Documentation=https://github.com/AdamSalonen1/Adams-Lair
+# The pipeline's first act is an HTTPS fetch; without this it races DHCP on boot
+# and burns its retries before the link is up.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=adams
+Group=adams
+WorkingDirectory=/home/adams/projects/Adams-Lair/projects/ride-report/worker
+EnvironmentFile=/home/adams/projects/Adams-Lair/projects/ride-report/worker/.env
+
+# claude reads OAuth from ~/.claude/.credentials.json. systemd does set HOME for
+# User=, but this is load-bearing enough to state outright — without it the CLI
+# fails auth and every run silently degrades to the fallback narrative.
+Environment=HOME=/home/adams
+Environment=NODE_ENV=production
+
+# flock is shared with Phase 4's Realtime listener so scheduled and event-driven
+# runs never overlap.
+#
+# -w rather than -n, which is a change from Phase 3. Back then the only thing
+# that could hold this lock was another scheduled run, and skipping was right:
+# that run wrote the same daily report this one would have. The Phase 4 listener
+# broke that assumption — it holds the lock to synthesize a *trip*, which writes
+# no daily report at all, so a tick that skipped because a trip was mid-flight
+# would leave the page's headline content three hours stale for no reason.
+# Waiting five minutes for a job that takes one is the cheaper trade.
+#
+# -E 75 makes "gave up waiting" exit 75 (EX_TEMPFAIL) instead of flock's default
+# 1, so it stays distinguishable from the pipeline's own exit 1. Paired with
+# SuccessExitStatus below, that stays green: five minutes of contention means
+# something is genuinely wedged, and the next tick is the right answer.
+ExecStart=/usr/bin/flock -w 300 -E 75 /run/lock/ride-report.lock /usr/bin/node run-scheduled.js
+
+# A cold Node start plus a Claude round trip is ~30-60s on a Pi, and the run now
+# loops upcoming trips after the daily report — one Claude call each. 30 min
+# covers a lock wait plus a handful of trips on a bad network day, and still
+# bounds a hung CLI.
+TimeoutStartSec=1800
+Nice=10
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ride-report
+
+# Exit codes: 0 = Claude narrative written, 1 = nothing written,
+# 2 = fallback narrative written, 75 = skipped, another run held the lock.
+# 2 is intentionally NOT listed as success — the row landed and the page stays
+# useful, but a persistent Claude outage should show up red in
+# `systemctl status`, not hide behind a green check. 75 IS success: declining
+# to run because a run is already in flight is correct behaviour, not a fault.
+SuccessExitStatus=0 75
