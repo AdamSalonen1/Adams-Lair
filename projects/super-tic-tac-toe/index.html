@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Tic Tac Toe — Adam's Lair</title>
+  <meta name="description" content="Super Tic Tac Toe — the meta version of the classic. Nine boards in a board; win the small games to win the big one. One of Adam's first builds.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="super-tic-tac-toe.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❌</text></svg>">
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="wrap">
+      <a class="brand" href="../../index.html">Adam's <span class="flame">Lair</span></a>
+      <ul>
+        <li><a href="../../index.html">Home</a></li>
+        <li><a href="../../about.html">About</a></li>
+        <li><a href="../../projects.html" class="active">Projects</a></li>
+        <li><a href="../../contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="stt-main">
+
+    <header class="stt-head">
+      <span class="kicker">The OG build</span>
+      <h1>Super Tic <span class="gradient">Tac Toe</span></h1>
+      <p class="stt-sub">
+        Tic-tac-toe, but each square is its own game of tic-tac-toe. Win a small
+        board to claim its square; line up three claimed squares to win. Play the
+        computer, or grab a friend for local two-player.
+      </p>
+    </header>
+
+    <div class="stt-controls">
+      <div class="stt-bar">
+        <div class="stt-modes" role="group" aria-label="Game mode">
+          <a class="stt-mode" href="?mode=cpu" data-mode="cpu">vs Computer</a>
+          <a class="stt-mode" href="?mode=2p" data-mode="2p">2 Players</a>
+        </div>
+        <a class="stt-btn" href="index.html" id="sttNew">New game</a>
+      </div>
+      <span class="stt-turn" id="sttTurn">Your turn (X)</span>
+    </div>
+
+    <div class="stt-stage">
+      <div class="mainContent" id="mainContent">
+        <div class="row" id="row0">
+          <div class="column" id="lg00" style="border-right: 1vi solid #000; border-bottom: 1vi solid #000">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+
+          <div class="column" id="lg01" style="border-bottom: 1vi solid #000;">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+
+          <div class="column" id="lg02" style="border-left: 1vi solid #000; border-bottom: 1vi solid #000">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" id="row1">
+          <div class="column" id="lg10" style="border-right: 1vi solid #000;">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+
+          <div class="column" id="lg11">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+
+          <div class="column" id="lg12" style="border-left: 1vi solid #000;">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" id="row2">
+          <div class="column" id="lg20" style="border-right: 1vi solid #000; border-top: 1vi solid #000">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+
+          <div class="column" id="lg21" style="border-top: 1vi solid #000;">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+
+          <div class="column" id="lg22" style="border-left: 1vi solid #000; border-top: 1vi solid #000">
+            <div class="row">
+              <div class="inner-column" id="sm00" style="border-right: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm01" style="border-bottom: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm02" style="border-left: 0.25vi solid #000; border-bottom: 0.25vi solid #000"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm10" style="border-right: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm11"></div>
+              <div class="inner-column" id="sm12" style="border-left: 0.25vi solid #000;"></div>
+            </div>
+            <div class="row">
+              <div class="inner-column" id="sm20" style="border-right: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+              <div class="inner-column" id="sm21" style="border-top: 0.25vi solid #000;"></div>
+              <div class="inner-column" id="sm22" style="border-left: 0.25vi solid #000; border-top: 0.25vi solid #000"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <details class="stt-how">
+      <summary>How to play</summary>
+      <div class="how-body">
+        <p>
+          The board is a 3&times;3 grid of small tic-tac-toe boards. <b>Win a small
+          board</b> and you claim its square on the big board. Win three squares in a
+          row on the big board and you win the whole thing.
+        </p>
+        <p>
+          The catch: the square you play in decides which small board your opponent
+          must play in next. Play the top-left square of any board, and the next move
+          happens on the top-left board. If that board is already won, the next player
+          gets a free choice.
+        </p>
+        <p>
+          <b>X</b> always moves first. In <b>vs Computer</b>, you play X and O answers
+          with a random legal move; in <b>2 Players</b>, you and a friend take turns on
+          the same screen. Hit <b>New game</b> to start over.
+        </p>
+      </div>
+    </details>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 Adam Salonen · Adam's Lair</span>
+      <span>Built with an unreasonable amount of orange 🧡</span>
+    </div>
+  </footer>
+
+  <script src="logic.js"></script>
+</body>
+</html>
