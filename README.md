@@ -33,6 +33,19 @@ The daily song is picked by shuffling all 182 songs with a fixed seed and walkin
 one per day, so every player gets the same song and none repeats for 182 days.
 There's no server; progress lives in `localStorage`.
 
+### MPLS Tomorrow Night (`projects/mpls-tonight/`)
+
+A single static page shortlisting things to do in Minneapolis on the evening of
+Tuesday, July 28, 2026. Two files, no JS: `index.html` and `mpls-tonight.css`
+(which extends the site's `css/style.css`).
+
+The page is deliberately split in two. The lead cards are the events actually
+scheduled that night — the Twins game and the Lynx game — and everything below
+is the standing Tuesday-evening version of the city (lakes, patios, First Ave's
+small room, a rainy-day fallback), which stays true whatever the date. Every
+card links out to the venue's own calendar rather than restating a lineup the
+page can't keep current.
+
 ## Tools
 
 ```sh
