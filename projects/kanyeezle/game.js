@@ -312,6 +312,7 @@
 
       day = L.dayNumber(new Date(), EPOCH);
       answer = L.dailyAnswer(songs, day);
+      state.day = day;
       load();
 
       el.puzzleNo.textContent = 'Daily puzzle #' + (day + 1);

@@ -401,6 +401,15 @@
 
 .how-foot a { color: var(--orange-deep); }
 
+.disclaimer {
+  margin: 32px auto 0;
+  max-width: 60ch;
+  text-align: center;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
 .sw {
   display: inline-block;
   width: 12px;
